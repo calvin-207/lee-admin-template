@@ -130,7 +130,7 @@ class LoginView(CustomAPIView):
             # 缓存用户的jwt token
             if IS_SINGLE_TOKEN:
                 redis_conn = get_redis_connection("singletoken")
-                k = "lybbn-single-token{}".format(user.id)
+                k = "lee-single-token{}".format(user.id)
                 TOKEN_EXPIRE_CONFIG = getattr(settings, "SIMPLE_JWT", None)
                 if TOKEN_EXPIRE_CONFIG:
                     TOKEN_EXPIRE = TOKEN_EXPIRE_CONFIG["ACCESS_TOKEN_LIFETIME"]
