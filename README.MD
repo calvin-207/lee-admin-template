@@ -17,11 +17,11 @@
     </tr>
     <tr>
       <td><strong>👤 测试账号</strong></td>
-      <td><code>admin</code></td>
+      <td><code>SuperAdmin</code></td>
     </tr>
     <tr>
       <td><strong>🔑 登录密码</strong></td>
-      <td><code>123456</code></td>
+      <td><code>abcd1234</code></td>
     </tr>
   </table>
 </div>
