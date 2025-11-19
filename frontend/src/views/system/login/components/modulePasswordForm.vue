@@ -72,6 +72,7 @@
 				formData.value.captcha = null
 				formData.value.captchaKey = res.data.key
 				image_base.value = res.data.image_base
+        console.log('====', formData)
 			}else{
 				ElMessage.error(res.msg)
 			}

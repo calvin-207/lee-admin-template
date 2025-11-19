@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import WebSocket from "@/utils/websocket";
 import { ElNotification } from "element-plus";
 
-export const useLywebsocket = defineStore("lywebsocket", {
+export const useLeewebsocket = defineStore("leewebsocket", {
   state: () => {
     return {
       isWebSocketOpen: false,

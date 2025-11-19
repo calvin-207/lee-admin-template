@@ -22,7 +22,7 @@
 			<el-icon><FullScreen /></el-icon>
 		</div>
 		<div class="msg panel-item" @click="showMsg">
-			<el-badge :hidden="lywebsocket.msgInfo.msgNumber==0" :value="lywebsocket.msgInfo.msgNumber" class="badge" type="danger">
+			<el-badge :hidden="leewebsocket.msgInfo.msgNumber==0" :value="leewebsocket.msgInfo.msgNumber" class="badge" type="danger">
 				<el-tooltip  effect="dark" content="消息列表" placement="bottom">
 					<el-icon><ChatDotRound /></el-icon>
 				</el-tooltip>
@@ -106,9 +106,9 @@
 	import {useSiteThemeStore} from "@/store/siteTheme";
 	import {useUserState} from "@/store/userState";
 	import { useRouter } from 'vue-router';
-	import { useLywebsocket } from "@/store/websocket";
+	import { useLeewebsocket } from "@/store/websocket";
 	
-	const lywebsocket = useLywebsocket()
+	const leewebsocket = useLeewebsocket()
 	const router = useRouter()
 	const siteThemeStore = useSiteThemeStore()
 	const userState = useUserState()
@@ -151,7 +151,7 @@
 			if(res.code === 2000){
 				ElMessage.success(res.msg)
 				msgList.value = []
-				lywebsocket.setUnread(0)
+				leewebsocket.setUnread(0)
 			}else{
 				ElMessage.warning(res.msg)
 			}

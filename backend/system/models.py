@@ -358,6 +358,13 @@ class Dictionary(CoreModel):
     parent = models.ForeignKey(to="self",related_name="sublist",db_constraint=False,on_delete=models.PROTECT,blank=True,null=True,verbose_name="父级",help_text="父级")
     remark = models.CharField(max_length=255, blank=True, null=True, verbose_name="备注", help_text="备注")
 
+    def recursion_delete(self,*args, **kwargs):
+        children = Dictionary.objects.filter(parent=self)
+        for child in children:
+            child.recursion_delete(*args, **kwargs)  # 递归调用
+        # 3. 删除自己
+        super().delete(*args, **kwargs)
+
     class Meta:
         db_table = table_prefix + 'dictionary'
         verbose_name = "字典表"

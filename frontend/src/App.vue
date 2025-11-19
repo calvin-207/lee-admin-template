@@ -11,10 +11,10 @@
     import config from '@/config'
     import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
     import en from 'element-plus/dist/locale/en.mjs'
-    import { useLywebsocket } from "@/store/websocket";
+    import { useLeewebsocket } from "@/store/websocket";
     import { useRoute } from 'vue-router';
     const route = useRoute()
-    const lywebsocket = useLywebsocket()
+    const leewebsocket = useLeewebsocket()
     const userState = useUserState()
     const siteThemeStore = useSiteThemeStore()
     const colorPrimary = siteThemeStore.colorPrimary
@@ -37,9 +37,10 @@
     })
 
     watch( () => route.path, () => {
-            if (!lywebsocket.isWebsocket()) {
+            console.log('ws check, ----------')
+            if (!leewebsocket.isWebsocket()) {
                 try {
-                    lywebsocket.initWebSocket()
+                    leewebsocket.initWebSocket()
                 } catch (e) {
                     console.log('websocket错误');
                 }

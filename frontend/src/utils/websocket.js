@@ -1,7 +1,7 @@
 import { ElNotification as message } from "element-plus";
 import { getToken } from "@/utils/util";
 import sysConfig from "@/config";
-import { useLywebsocket } from "@/store/websocket";
+import { useLeewebsocket } from "@/store/websocket";
 
 function getJWTAuthorization() {
   const token = getToken();
@@ -9,7 +9,7 @@ function getJWTAuthorization() {
   return jwt;
 }
 
-const lyWebSocket = {
+const leeWebSocket = {
   websocket: null,
   socketOpen: false,
   hearbeatTimer: null,
@@ -35,84 +35,84 @@ const lyWebSocket = {
     const wsUrl =
       (window.location.protocol === "http:" ? "ws://" : "wss://") +
       `${domain}/ws/msg/`;
-    lyWebSocket.websocket = new WebSocket(wsUrl, [
+    leeWebSocket.websocket = new WebSocket(wsUrl, [
       "JWTLEEADMIN",
       getJWTAuthorization(),
     ]);
 
-    lyWebSocket.websocket.onmessage = (e) => {
+    leeWebSocket.websocket.onmessage = (e) => {
       if (revMessage) {
         revMessage(e);
       }
     };
 
-    lyWebSocket.websocket.onclose = (e) => {
-      lyWebSocket.socketOpen = false;
-      useLywebsocket().setWebSocketState(lyWebSocket.socketOpen);
+    leeWebSocket.websocket.onclose = (e) => {
+      leeWebSocket.socketOpen = false;
+      useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
 
-      if (lyWebSocket.isReconnect) {
-        lyWebSocket.reconnectTimer = setTimeout(() => {
-          if (lyWebSocket.reconnectCurrent > lyWebSocket.reconnectCount) {
-            clearTimeout(lyWebSocket.reconnectTimer);
-            lyWebSocket.isReconnect = false;
-            lyWebSocket.socketOpen = false;
-            useLywebsocket().setWebSocketState(lyWebSocket.socketOpen);
+      if (leeWebSocket.isReconnect) {
+        leeWebSocket.reconnectTimer = setTimeout(() => {
+          if (leeWebSocket.reconnectCurrent > leeWebSocket.reconnectCount) {
+            clearTimeout(leeWebSocket.reconnectTimer);
+            leeWebSocket.isReconnect = false;
+            leeWebSocket.socketOpen = false;
+            useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
             return;
           }
 
-          lyWebSocket.reconnectCurrent++;
-          lyWebSocket.reconnectWebSocket(revMessage); // 传递 revMessage 参数
-        }, lyWebSocket.reconnectInterval);
+          leeWebSocket.reconnectCurrent++;
+          leeWebSocket.reconnectWebSocket(revMessage); // 传递 revMessage 参数
+        }, leeWebSocket.reconnectInterval);
       }
     };
 
-    lyWebSocket.websocket.onopen = () => {
-      lyWebSocket.socketOpen = true;
-      useLywebsocket().setWebSocketState(lyWebSocket.socketOpen);
-      lyWebSocket.isReconnect = true;
-      lyWebSocket.startHeartbeat();
+    leeWebSocket.websocket.onopen = () => {
+      leeWebSocket.socketOpen = true;
+      useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
+      leeWebSocket.isReconnect = true;
+      leeWebSocket.startHeartbeat();
     };
 
-    lyWebSocket.websocket.onerror = (e) => {};
+    leeWebSocket.websocket.onerror = (e) => {};
   },
   startHeartbeat() {
-    if (lyWebSocket.hearbeatTimer) {
-      clearInterval(lyWebSocket.hearbeatTimer);
+    if (leeWebSocket.hearbeatTimer) {
+      clearInterval(leeWebSocket.hearbeatTimer);
     }
 
-    lyWebSocket.hearbeatTimer = setInterval(() => {
+    leeWebSocket.hearbeatTimer = setInterval(() => {
       const data = {
         time: new Date().getTime(),
       };
-      lyWebSocket.sendWebSocketMessage(data);
-    }, lyWebSocket.hearbeatInterval);
+      leeWebSocket.sendWebSocketMessage(data);
+    }, leeWebSocket.hearbeatInterval);
   },
   sendWebSocketMessage(data, callback = null) {
     if (
-      lyWebSocket.websocket &&
-      lyWebSocket.websocket.readyState === lyWebSocket.websocket.OPEN
+      leeWebSocket.websocket &&
+      leeWebSocket.websocket.readyState === leeWebSocket.websocket.OPEN
     ) {
-      lyWebSocket.websocket.send(JSON.stringify(data));
+      leeWebSocket.websocket.send(JSON.stringify(data));
       callback && callback();
     } else {
-      clearInterval(lyWebSocket.hearbeatTimer);
-      lyWebSocket.socketOpen = false;
-      useLywebsocket().setWebSocketState(lyWebSocket.socketOpen);
+      clearInterval(leeWebSocket.hearbeatTimer);
+      leeWebSocket.socketOpen = false;
+      useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
     }
   },
   closeWebSocket() {
-    lyWebSocket.isReconnect = false;
-    lyWebSocket.websocket && lyWebSocket.websocket.close();
-    lyWebSocket.websocket = null;
-    lyWebSocket.socketOpen = false;
-    useLywebsocket().setWebSocketState(lyWebSocket.socketOpen);
+    leeWebSocket.isReconnect = false;
+    leeWebSocket.websocket && leeWebSocket.websocket.close();
+    leeWebSocket.websocket = null;
+    leeWebSocket.socketOpen = false;
+    useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
   },
   reconnectWebSocket() {
-    if (lyWebSocket.websocket && !lyWebSocket.isReconnect) {
-      lyWebSocket.closeWebSocket();
+    if (leeWebSocket.websocket && !leeWebSocket.isReconnect) {
+      leeWebSocket.closeWebSocket();
     }
-    lyWebSocket.initWebSocket(null);
+    leeWebSocket.initWebSocket(null);
   },
 };
 
-export default lyWebSocket;
+export default leeWebSocket;

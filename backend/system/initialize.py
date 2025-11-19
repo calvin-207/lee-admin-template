@@ -1,6 +1,9 @@
 import os
+from mimetypes import inited
+
 import django
 from django.core.cache import cache
+from django.db import transaction
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "main.settings")
 django.setup()
@@ -67,7 +70,7 @@ class Initialize:
         """
         初始化部门信息
         """
-        print('begin init dept....')
+        print('====================== begin init dept ======================')
         (parent, status) = Dept.objects.update_or_create(
             key="Lee-Admin",
             defaults={
@@ -90,11 +93,11 @@ class Initialize:
         for _it in children:
             _it["parent"] = parent
             Dept.objects.update_or_create(key=_it["key"],defaults=_it)
-        print('end init dept....')
+        print('====================== end init dept ======================')
 
     def init_button(self):
         """初始化权限表标识"""
-        print('begin init button...')
+        print('====================== begin button ======================')
         btns = [
             {"name": "编辑", "value": "Update"},
             {"name": "删除", "value": "Delete"},
@@ -113,11 +116,11 @@ class Initialize:
         ]
         for it in btns:
             Button.objects.update_or_create(name=it["name"],defaults=it)
-        print('end init button...')
+        print('====================== end button ======================')
 
 
     def init_menu(self):
-        print('begin init menu...')
+        print('====================== begin init menu ======================')
         self.menu_data = [
             {
                 "code": "01599f73f61848aa811f687b1cfc1588",
@@ -443,14 +446,11 @@ class Initialize:
                     cache_dict[key] = obj.id
             if len(self.menu_data) == Menu.objects.all().count():
                 break
-        print('end init menu...')
+        print('====================== end init menu ======================')
 
     def init_menu_button(self):
-        """
-        初始化菜单权限表
-        python .\manage.py  get_init_data system.MenuButton
-        """
-        self.menu_button_data = [
+        print('====================== begin init menu button ======================')
+        menu_button_data = [
             {
                 "id": 1,
                 "menu_id": "2e9937b37ac94e248e9ed159bfe7b655",
@@ -1037,7 +1037,7 @@ class Initialize:
             },
         ]
         menu_dict = {it.code: it for it in Menu.objects.all()}
-        for it in self.menu_button_data:
+        for it in menu_button_data:
             it.pop("id")
             it['menu_id'] =  menu_dict[it['menu_id']].id
             MenuButton.objects.update_or_create(
@@ -1045,9 +1045,11 @@ class Initialize:
                 name=it['name'],
                 defaults=it,
             )
+        print('====================== end init menu button ======================')
 
     def init_role(self):
         """初始化角色表"""
+        print('====================== begin init role ======================')
         Role.objects.update_or_create(
             key="admin",
             defaults={
@@ -1057,256 +1059,301 @@ class Initialize:
                 "status": 1,
             }
         )
+        print('====================== end init role ======================')
 
 
     def init_users(self):
-        """初始化用户表"""
-        data = [
-            {
-                "password": "pbkdf2_sha256$260000$oE0tnjC7PRIV6aCEah0J1F$scZo6l2/kekoClW8jZ6bM4PmSXevb4qzqHLro8PvzLc=",
-                "is_superuser": 1,
-                "is_staff": 1,
-                "identity": 0,
-                "is_active": 1,
-                "username": "superadmin",
-                "name": "超级管理员",
-                "nickname": "超级管理员",
-                "dept_id": "",
-            },
-            {
-                "password": "pbkdf2_sha256$260000$DO6dpT8e4Ls0yD51grncC8$KZfswxNJ8MILTWwy+bicRyU7Q3PKC4orn4SJbhIkN4Q=",
-                "is_superuser": 0,
-                "is_staff": 1,
-                "identity": 1,
-                "gender": 2,
-                "is_active": 1,
-                "username": "admin",
-                "name": "管理员",
-                "nickname": "管理员",
-                "role": ["admin"],
-            },
-            {
-                "password": "pbkdf2_sha256$260000$oivECWOjB0GJyMjPsrqb3t$9FvnYtXtsNWDva2P3A/eIg6cRMLOp7kiIOuwfLKyDAY=",
-                "is_superuser": 0,
-                "is_staff": 0,
-                "identity": 2,
-                "is_active": 1,
-                "username": "test",
-                "name": "游客",
-                "mobile": "18888888888",
-                "nickname": "游客",
-                "dept_id": "",
-                "role": [],
-            },
-        ]
-        for it in data:
-            roles = it.pop("role", []) or []
-            if roles:
-                roles = Role.objects.filter(key__in=roles)
-            (obj, status) = Users.objects.update_or_create(username=it["username"], defaults=it)
+        print('====================== begin init user ======================')
+        do_insert = True
+        if self.delete:
+            Users.objects.all().delete()
+        else:
+            if Users.objects.count() > 0:
+                print('init dictionary zero because Dictionary any data exist!')
+                do_insert = False
+        if do_insert:
+            from django.contrib.auth.hashers import make_password
+            """初始化用户表"""
+            data = [
+                {
+                    "password": "",
+                    "is_superuser": 1,
+                    "is_staff": 1,
+                    "identity": 0,
+                    "is_active": 1,
+                    "username": "SuperAdmin",
+                    "name": "超级管理员",
+                    "nickname": "超级管理员",
+                    "dept_id": "",
+                },
+                {
+                    "password": "",
+                    "is_superuser": 0,
+                    "is_staff": 1,
+                    "identity": 1,
+                    "gender": 2,
+                    "is_active": 1,
+                    "username": "admin",
+                    "name": "管理员",
+                    "nickname": "管理员",
+                    "role": ["admin"],
+                },
+                {
+                    "password": "",
+                    "is_superuser": 0,
+                    "is_staff": 0,
+                    "identity": 2,
+                    "is_active": 1,
+                    "username": "guest",
+                    "name": "游客",
+                    "mobile": "18888888888",
+                    "nickname": "游客",
+                    "dept_id": "",
+                    "role": [],
+                },
+            ]
 
-            for role in roles:
-                role.role_users.add(obj)
+            # 将明文 '123456' 转换为哈希值
+            hashed_password = make_password('a123456')
+            for it in data:
+                roles = it.pop("role", []) or []
+                if roles:
+                    roles = Role.objects.filter(key__in=roles)
+                it['password'] = hashed_password
+                (obj, status) = Users.objects.update_or_create(username=it["username"], defaults=it)
 
+                for role in roles:
+                    role.role_users.add(obj)
+            print('init user count', len(data))
+
+        print('====================== end init user ======================')
 
 
 
     def init_systemconfig(self):
-        data = [
-            {
-                "creator_id": "0",
-                "title": "基础配置",
-                "key": "base",
-                "value": None,
-                "sort": 0,
-                "status": True,
-                "data_options": None,
-                "form_item_type": 0,
-                "rule": None,
-                "placeholder": None,
-                "tip": None,
-                "setting": None,
-                "childrens": [
-                    {
-                        "creator_id": "0",
-                        "title": "logo",
-                        "key": "logo",
-                        "value": "http://127.0.0.1:8000/media/platform/2025-07-08/20250708113144_688.png",
-                        "sort": 10,
-                        "status": True,
-                        "data_options": None,
-                        "form_item_type": 7,
-                        "rule": None,
-                        "placeholder": None,
-                        "tip": None,
-                        "setting": None,
-                    },
-                    {
-                        "creator_id": "0",
-                        "title": "登录验证码",
-                        "key": "loginCaptcha",
-                        "value": "true",
-                        "sort": 8,
-                        "status": True,
-                        "data_options": None,
-                        "form_item_type": 9,
-                        "rule": None,
-                        "placeholder": None,
-                        "tip": "登录验证码开启/关闭",
-                        "setting": None,
-                    },
-                    {
-                        "creator_id": "0",
-                        "title": "系统标题",
-                        "key": "systitle",
-                        "value": "lee-admin-template",
-                        "sort": 5,
-                        "status": True,
-                        "data_options": None,
-                        "form_item_type": 0,
-                        "rule": None,
-                        "placeholder": "请输入系统标题",
-                        "tip": None,
-                        "setting": None,
-                    },
-                ],
-            },
-            {
-                "creator_id": "0",
-                "parent_id": None,
-                "title": "Api白名单",
-                "key": "apiWhiteList",
-                "value": "[]",
-                "sort": 0,
-                "status": True,
-                "data_options": None,
-                "form_item_type": 0,
-                "rule": None,
-                "placeholder": None,
-                "tip": None,
-                "setting": None,
-            },
-        ]
-        for it in data:
-            childrens = it.pop("childrens", []) or []
-            (obj, status) = SystemConfig.objects.update_or_create(key=it["key"], defaults=it)
-            for cit in childrens:
-                cit['parent'] = obj
-                (obj, status) = SystemConfig.objects.update_or_create(key=cit["key"], parent_id=obj.id, defaults=cit)
+        print('====================== init system config ======================')
+        do_insert = True
+        if self.delete:
+            SystemConfig.objects.filter(parent__isnull=False).delete()
+            SystemConfig.objects.filter(parent__isnull=True).delete()
+        else:
+            if SystemConfig.objects.all().count() == 0:
+                print('system config already initialized, because SystemConfig any data exist!')
+                do_insert = False
+
+        if do_insert:
+            data = [
+                {
+                    "creator_id": "0",
+                    "title": "基础配置",
+                    "key": "base",
+                    "value": None,
+                    "sort": 0,
+                    "status": True,
+                    "data_options": None,
+                    "form_item_type": 0,
+                    "rule": None,
+                    "placeholder": None,
+                    "tip": None,
+                    "setting": None,
+                    "childrens": [
+                        {
+                            "creator_id": "0",
+                            "title": "logo",
+                            "key": "logo",
+                            "value": "http://127.0.0.1:8000/media/platform/2025-07-08/20250708113144_688.png",
+                            "sort": 10,
+                            "status": True,
+                            "data_options": None,
+                            "form_item_type": 7,
+                            "rule": None,
+                            "placeholder": None,
+                            "tip": None,
+                            "setting": None,
+                        },
+                        {
+                            "creator_id": "0",
+                            "title": "登录验证码",
+                            "key": "loginCaptcha",
+                            "value": "false",
+                            "sort": 8,
+                            "status": True,
+                            "data_options": None,
+                            "form_item_type": 9,
+                            "rule": None,
+                            "placeholder": None,
+                            "tip": "登录验证码开启/关闭",
+                            "setting": None,
+                        },
+                        {
+                            "creator_id": "0",
+                            "title": "系统标题",
+                            "key": "systitle",
+                            "value": "lee-admin-template",
+                            "sort": 5,
+                            "status": True,
+                            "data_options": None,
+                            "form_item_type": 0,
+                            "rule": None,
+                            "placeholder": "请输入系统标题",
+                            "tip": None,
+                            "setting": None,
+                        },
+                    ],
+                },
+                {
+                    "creator_id": "0",
+                    "parent_id": None,
+                    "title": "Api白名单",
+                    "key": "apiWhiteList",
+                    "value": "[]",
+                    "sort": 0,
+                    "status": True,
+                    "data_options": None,
+                    "form_item_type": 0,
+                    "rule": None,
+                    "placeholder": None,
+                    "tip": None,
+                    "setting": None,
+                },
+            ]
+            for it in data:
+                childrens = it.pop("childrens", []) or []
+                (obj, status) = SystemConfig.objects.update_or_create(key=it["key"], defaults=it)
+                for cit in childrens:
+                    cit['parent'] = obj
+                    (child_obj, status) = SystemConfig.objects.update_or_create(key=cit["key"], parent_id=obj.id, defaults=cit)
+        print('init system config count:', len(data))
+
+
+        print('====================== end system config ======================')
 
     def init_dictionary(self):
-        print('begin init dictionary')
-        data = [
-            {
-                "creator_id": "0",
-                "label": "是/否-布尔值",
-                "value": "button_bool",
-                "status": True,
-                "sort": 29,
-                "parent_id": None,
-                "remark": "",
-                "childrens": [
+        print('====================== begin init dictionary ======================')
+        do_insert = True
+        if self.delete:
+            for it in Dictionary.objects.filter(parent__isnull=True):
+                it.recursion_delete()
+        else:
+            if Dictionary.objects.count() > 0:
+                print('init dictionary zero because Dictionary any data exist!')
+                do_insert = False
+        if do_insert:
+            data = [
                     {
                         "creator_id": "0",
-                        "label": "是",
-                        "value": "true",
+                        "label": "是/否-布尔值",
+                        "value": "button_bool",
                         "status": True,
-                        "sort": 1,
+                        "sort": 29,
+                        "parent_id": None,
                         "remark": "",
+                        "childrens": [
+                            {
+                                "creator_id": "0",
+                                "label": "是",
+                                "value": "true",
+                                "status": True,
+                                "sort": 1,
+                                "remark": "",
+                            },
+                            {
+                                "creator_id": "0",
+                                "label": "否",
+                                "value": "false",
+                                "status": True,
+                                "sort": 2,
+                                "remark": "",
+                            },
+                        ]
                     },
-                    {
-                        "creator_id": "0",
-                        "label": "否",
-                        "value": "false",
-                        "status": True,
-                        "sort": 2,
-                        "remark": "",
-                    },
-                ]
-            },
 
-            {
-                "creator_id": "0",
-                "label": "是/否-数字值",
-                "value": "button_number",
-                "status": True,
-                "sort": 30,
-                "parent_id": None,
-                "remark": "",
-                "childrens": [
                     {
                         "creator_id": "0",
-                        "label": "否",
-                        "value": "0",
+                        "label": "是/否-数字值",
+                        "value": "button_number",
                         "status": True,
-                        "sort": 2,
+                        "sort": 30,
+                        "parent_id": None,
                         "remark": "",
+                        "childrens": [
+                            {
+                                "creator_id": "0",
+                                "label": "否",
+                                "value": "0",
+                                "status": True,
+                                "sort": 2,
+                                "remark": "",
+                            },
+                            {
+                                "creator_id": "0",
+                                "label": "是",
+                                "value": "1",
+                                "status": True,
+                                "sort": 1,
+                                "remark": "",
+                            },
+                        ]
                     },
-                    {
-                        "creator_id": "0",
-                        "label": "是",
-                        "value": "1",
-                        "status": True,
-                        "sort": 1,
-                        "remark": "",
-                    },
-                ]
-            },
 
-            {
-                "creator_id": "0",
-                "label": "性别",
-                "value": "gender",
-                "status": True,
-                "sort": 1,
-                "parent_id": None,
-                "remark": "",
-                "childrens": [
                     {
                         "creator_id": "0",
-                        "label": "女",
-                        "value": "1",
-                        "status": True,
-                        "sort": 2,
-                        "remark": "",
-                    },
-                    {
-                        "creator_id": "0",
-                        "label": "未知",
-                        "value": "0",
+                        "label": "性别",
+                        "value": "gender",
                         "status": True,
                         "sort": 1,
+                        "parent_id": None,
                         "remark": "",
+                        "childrens": [
+                            {
+                                "creator_id": "0",
+                                "label": "女",
+                                "value": "1",
+                                "status": True,
+                                "sort": 2,
+                                "remark": "",
+                            },
+                            {
+                                "creator_id": "0",
+                                "label": "未知",
+                                "value": "0",
+                                "status": True,
+                                "sort": 1,
+                                "remark": "",
+                            },
+                            {
+                                "creator_id": "0",
+                                "label": "男",
+                                "value": "2",
+                                "status": True,
+                                "sort": 3,
+                                "remark": "",
+                            },
+                        ],
                     },
-                    {
-                        "creator_id": "0",
-                        "label": "男",
-                        "value": "2",
-                        "status": True,
-                        "sort": 3,
-                        "remark": "",
-                    },
-                ],
-            },
         ]
-        for it in data:
-            childrens = it.pop("childrens", []) or []
-            (obj, status) = Dictionary.objects.update_or_create(label=it["label"], defaults=it)
-            for cit in childrens:
-                cit['parent'] = obj
-                (obj, status) = Dictionary.objects.update_or_create(label=cit["label"], parent_id=obj.id, defaults=cit)
+            for it in data:
+                childrens = it.pop("childrens", []) or []
+                (obj, status) = Dictionary.objects.update_or_create(label=it["label"], defaults=it)
+                for cit in childrens:
+                    cit['parent'] = obj
+                    (child_obj, status) = Dictionary.objects.update_or_create(label=cit["label"], parent_id=obj.id, defaults=cit)
+            print('success init dictionary count:', len(data))
+
+        print('====================== end init dictionary ======================')
+
 
 
     def run(self):
         """执行初始化"""
         try:
-            # self.init_dept()
-            # self.init_button()
-            # self.init_menu()
-            # self.init_menu_button()
-            # self.init_role()
-            # self.init_users()
-            # self.init_systemconfig()
+            self.init_button()
+            self.init_menu()
+            self.init_menu_button()
+            self.init_dept()
+            self.init_role()
+            self.init_users()
+            self.init_systemconfig()
             self.init_dictionary()
             print("所有初始化完成!")
         except Exception as e:
@@ -1315,7 +1362,8 @@ class Initialize:
 
 def main(is_delete=False):
     """主函数"""
-    Initialize(is_delete).run()
+    with transaction.atomic():
+        Initialize(is_delete).run()
 
 
 if __name__ == "__main__":

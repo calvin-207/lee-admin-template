@@ -23,8 +23,6 @@ a,button,input,textarea{-webkit-tap-highlight-color:rgba(0,0,0,0);box-sizing: bo
 /* 头部 */
 .lee-panel-header {height: 48px;background: var(--ly-header-bg);color: #fff;display: flex;justify-content:space-between;}
 .lee-panel-header-left {display: flex;align-items: center;padding-left:20px;flex-shrink: 0;}
-.lee-panel-header-center {display: flex;align-items: center;}
-.lee-panel-header-center a{font-size: 12px;color: #b5afaf;text-decoration: none;letter-spacing: .5px;}
 .lee-panel-header-right {display: flex;align-items: center;flex-shrink: 0;}
 .lee-panel-header .logo-bar {font-size: 20px;font-weight: bold;display: flex;align-items: center;}
 .lee-panel-header .logo-bar .logo {margin-right: 10px;width: 35px;height: 35px;}

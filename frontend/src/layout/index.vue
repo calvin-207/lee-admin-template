@@ -8,10 +8,6 @@
 					<span v-if="!ismobile">{{ userState.sysConfig.systitle}}</span>
 				</div>
 			</div>
-			<div class="lee-panel-header-center" v-if="!ismobile">
-				<a href="https://doc.lee.cn/" target="_blank">Copyright © lybbn</a>
-				<span style="cursor: pointer;padding-right:8px;margin-left: 5px;" @click="canUpgradeClick">v{{ userState.sysConfig.sysVersion }}</span>
-			</div>
 			<div class="lee-panel-header-right">
 				<userbar></userbar>
 			</div>
@@ -60,10 +56,6 @@
 					<NavMenu :navMenus="menu"></NavMenu>
 				</el-menu>
 			</div>
-			<div class="lee-panel-header-center" v-if="!ismobile">
-				<a href="https://doc.lee.cn/" target="_blank">Copyright © lybbn</a>
-				<span style="cursor: pointer;padding-right:8px;margin-left: 5px;" @click="canUpgradeClick">v{{ userState.sysConfig.sysVersion }}</span>
-			</div>
 			<SideMobile v-if="ismobile"></SideMobile>
 			<div class="lee-panel-header-right">
 				<userbar></userbar>
@@ -91,10 +83,6 @@
 					<ly-img class="logo" :src="userState.sysConfig.logo" />
 					<span v-if="!ismobile">{{ config.APP_NAME}}</span>
 				</div>
-			</div>
-			<div class="lee-panel-header-center" v-if="!ismobile">
-				<a href="https://doc.lybbn.cn/" target="_blank">Copyright © lybbn</a>
-				<span style="cursor: pointer;padding-right:8px;margin-left: 5px;" @click="canUpgradeClick">v{{ userState.sysConfig.sysVersion }}</span>
 			</div>
 			<div class="lee-panel-header-right">
 				<userbar></userbar>
@@ -456,6 +444,4 @@ onBeforeUnmount(() => {
 .lee-panel-side-scroll:deep(.el-menu-item:hover){
 	background-color: var(--el-color-primary-light-9) !important;
 }
-.lee-panel-header-center {display: flex;align-items: center;}
-.lee-panel-header-center a{font-size: 12px;color: #b5afaf;text-decoration: none;letter-spacing: .5px;}
 </style>

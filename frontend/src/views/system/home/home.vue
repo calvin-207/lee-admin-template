@@ -135,10 +135,6 @@
     // 图表类型
     const chartType = ref('week')
 
-    // 快捷操作
-    // const quickActions = ref([
-    //     { name: '新增用户', icon: 'User', action: 'addUser' },
-    // ])
     let quickActions = computed(() => {
         let tmparr = []
         userState.permissions.menus.forEach(item=>{
@@ -155,12 +151,7 @@
 
     // 消息列表
     const messages = ref([
-        { title: '系统升级通知', time: '2025-05-15 10:30', content: '系统将于今晚凌晨2点进行升级维护，预计耗时2小时。' },
-        { title: '新订单提醒', time: '2025-05-15 09:15', content: '您有5笔新订单待处理，请及时处理。' },
-        { title: '库存预警', time: '2025-05-14 16:45', content: '商品"A001"库存不足，当前库存10件，请及时补货。' },
-        { title: '会员活动', time: '2025-05-14 14:20', content: '新会员注册活动已上线，注册即送100积分。' },
-        { title: '系统公告', time: '2025-05-13 11:10', content: '系统新增了数据导出功能，欢迎使用。' },
-        { title: '消息通知', time: '2025-05-12 11:00', content: '有一个用户下载了您的应用。' },
+        { title: '系统公告', time: '2025-11-13 11:10', content: '系统新增了数据导出功能，欢迎使用。' },
     ])
 
     // 处理快捷操作
