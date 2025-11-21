@@ -17,8 +17,8 @@
 		class="table-select"
 	>
 		<template #empty>
-			<div class="ly-table-select__table" :style="{width: tableWidth > 0? tableWidth+ 'px':'100%'}" v-loading="loading">
-				<div class="ly-table-select__header">
+			<div class="lee-image-select__table" :style="{width: tableWidth > 0? tableWidth+ 'px':'100%'}" v-loading="loading">
+				<div class="lee-image-select__header">
 					<slot name="header" :form="formData" :submit="formSubmit"></slot>
 				</div>
 
@@ -42,7 +42,7 @@
 				<slot></slot>
 				</el-table>
 
-				<div class="ly-table-select__page">
+				<div class="lee-image-select__page">
 					<Pagination
 						:small="true"
 						v-bind:child-msg="pageparm"
@@ -331,24 +331,24 @@
 </script>
 
 <style scoped>
-	.ly-table-select__table {
+	.lee-image-select__table {
 		padding: 12px;
 		max-width: 100%;
 		box-sizing: border-box;
 	}
 
-	.ly-table-select__page {
+	.lee-image-select__page {
 		padding-top: 2px;
 	}
 
-	.ly-table-select__header{
+	.lee-image-select__header{
 		display: flex;
 		align-items: center;
 	}
 
 	/* 移动端适配 */
 	@media (max-width: 768px) {
-		.ly-table-select__table {
+		.lee-image-select__table {
 			width: 100% !important;
 			padding: 8px;
 		}

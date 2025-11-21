@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     "captcha",
     "system",
+    "apps.leemessages"
 ]
 
 MIDDLEWARE = [

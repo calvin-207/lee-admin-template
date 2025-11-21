@@ -11,7 +11,7 @@
             </LeeSearchBar>
         </el-card>
         <el-card class="leetable" shadow="hover">
-            <ly-table v-bind="tableBindProps" ref="tableref" @selection-change="selectionChange">
+            <lee-table v-bind="tableBindProps" ref="tableref" @selection-change="selectionChange">
                 <template v-slot:topbar>
                     <el-button type="primary" icon="plus"  @click="handleAddClick" v-auth="'Create'">新增</el-button>
                     <el-button type="danger" plain icon="delete" :disabled="selection.length==0" title="批量删除" @click="batch_del" v-auth="'Delete'"></el-button>
@@ -35,7 +35,7 @@
                         <span class="table-operate-btn delete" @click="handleEdit(scope.row,'delete')" v-auth="'Delete'">删除</span>
                     </template>
                 </el-table-column>
-            </ly-table>
+            </lee-table>
         </el-card>
         <saveDialog ref="saveDialogRef" @refreshData="getData" v-if="isDialogVisible" @closed="isDialogVisible = false"></saveDialog>
     </div>

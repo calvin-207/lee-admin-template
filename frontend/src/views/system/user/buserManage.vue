@@ -40,13 +40,13 @@
                     </LeeSearchBar>
                 </el-card>
                 <el-card class="leetable" shadow="hover">
-                    <ly-table v-bind="tableBindProps" ref="tableref" @selection-change="selectionChange">
+                    <lee-table v-bind="tableBindProps" ref="tableref" @selection-change="selectionChange">
                         <template v-slot:topbar>
                             <el-button type="primary" icon="plus"  @click="handleAddClick" v-auth="'Create'">新增</el-button>
                             <el-button type="danger" plain icon="delete" :disabled="selection.length==0" title="批量删除" @click="batch_del" v-auth="'Delete'"></el-button>
                         </template>
                         <template #avatar="scope">
-                            <ly-image  :src="scope.row.avatar ? scope.row.avatar : defaultAvatar" :preview-src-list="[scope.row.avatar]" style="width: 30px;height: 30px" preview-teleported v-if="scope.row.avatar"></ly-image>
+                            <lee-image  :src="scope.row.avatar ? scope.row.avatar : defaultAvatar" :preview-src-list="[scope.row.avatar]" style="width: 30px;height: 30px" preview-teleported v-if="scope.row.avatar"></lee-image>
                         </template>
                         <template #dept="scope">
                             <el-tag v-if="!!scope.row.deptName">{{scope.row.deptName}}</el-tag>
@@ -74,7 +74,7 @@
                                 <span class="table-operate-btn" @click="handleEdit(scope.row,'resetpass')" v-auth="'ResetPass'">重置密码</span>
                             </template>
                         </el-table-column>
-                    </ly-table>
+                    </lee-table>
                 </el-card>
             </div>
         </div>

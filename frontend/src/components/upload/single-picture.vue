@@ -4,16 +4,16 @@
 			<div class="ly-upload__progress">
 				<el-progress :percentage="file.percentage" :text-inside="true" :stroke-width="16"/>
 			</div>
-			<ly-image class="image" :src="file.tempFile" fit="cover"></ly-image>
+			<lee-image class="image" :src="file.tempFile" fit="cover"></lee-image>
 		</div>
 		<div v-if="file && file.status=='success'" class="ly-upload__img">
-			<ly-image class="image" :src="file.url" :preview-src-list="[file.url]" fit="cover" hide-on-click-modal preview-teleported>
+			<lee-image class="image" :src="file.url" :preview-src-list="[file.url]" fit="cover" hide-on-click-modal preview-teleported>
 				<template #placeholder>
 					<div class="ly-upload__img-slot">
 						Loading...
 					</div>
 				</template>
-			</ly-image>
+			</lee-image>
 			<div class="ly-upload__img-actions" v-if="!disabled">
 				<span class="del" @click="handleRemove()"><el-icon><Delete /></el-icon></span>
 			</div>
