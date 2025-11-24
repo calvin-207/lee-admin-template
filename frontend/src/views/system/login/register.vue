@@ -25,7 +25,7 @@
                 <!-- 品牌展示区 -->
                 <div class="brand-section">
                     <div class="logo-wrapper">
-                        <ly-img 
+                        <lee-img
                             :alt="config.APP_NAME" 
                             :src="userState.sysConfig.logo"
                             class="logo-image"

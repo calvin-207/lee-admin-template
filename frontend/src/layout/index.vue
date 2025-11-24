@@ -4,7 +4,7 @@
 		<header class="lee-panel-header">
 			<div class="lee-panel-header-left">
 				<div class="logo-bar">
-					<ly-img class="logo" :src="userState.sysConfig.logo" />
+					<lee-img class="logo" :src="userState.sysConfig.logo" />
 					<span v-if="!ismobile">{{ userState.sysConfig.systitle}}</span>
 				</div>
 			</div>
@@ -47,7 +47,7 @@
 		<header class="lee-panel-header">
 			<div class="lee-panel-header-left">
 				<div class="logo-bar">
-					<ly-img class="logo" :src="userState.sysConfig.logo" />
+					<lee-img class="logo" :src="userState.sysConfig.logo" />
 					<span v-if="!ismobile">{{ config.APP_NAME}}</span>
 				</div>
 			</div>
@@ -80,7 +80,7 @@
 		<header class="lee-panel-header">
 			<div class="lee-panel-header-left">
 				<div class="logo-bar">
-					<ly-img class="logo" :src="userState.sysConfig.logo" />
+					<lee-img class="logo" :src="userState.sysConfig.logo" />
 					<span v-if="!ismobile">{{ config.APP_NAME}}</span>
 				</div>
 			</div>

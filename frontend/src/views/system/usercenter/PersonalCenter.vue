@@ -323,7 +323,7 @@
                             :class="{active: avatarPreviewUrl === avatar}"
                             @click="avatarPreviewUrl = avatar"
                         >
-                            <ly-img :src="avatar" />
+                            <lee-img :src="avatar" />
                         </div>
                     </div>
                 </div>
