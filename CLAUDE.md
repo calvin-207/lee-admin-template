@@ -8,7 +8,7 @@ Lee Admin Template is a full-stack admin management system combining Vue 3 + Vit
 
 **Tech Stack:**
 - Frontend: Vue 3, Vite 6, Element Plus, Pinia, Vue Router, Vue i18n
-- Backend: Django 5.1, DRF 3.15, Channels (WebSocket), PostgreSQL, Redis
+- Backend: Django 5.1, DRF 3.15, Channels (WebSocket),Django-tenants, PostgreSQL, Redis
 - Authentication: JWT with djangorestframework-simplejwt
 
 ## Common Commands
