@@ -92,7 +92,7 @@ class UserImportSerializer(CustomModelSerializer):
             UniqueValidator(queryset=Users.objects.all(), message="账号必须唯一")
         ],
     )
-    password = serializers.CharField(required=False, default=make_password("123456"))
+    password = serializers.CharField(required=False, default=make_password("Admin@123456"))
     nickname = serializers.CharField(required=False, allow_blank=True)
     is_staff = serializers.BooleanField(
         required=False, default=True
@@ -124,7 +124,7 @@ class UserCreateSerializer(CustomModelSerializer):
             UniqueValidator(queryset=Users.objects.all(), message="账号必须唯一")
         ],
     )
-    password = serializers.CharField(required=False, default=make_password("123456"))
+    password = serializers.CharField(required=False, default=make_password("Admin@123456"))
     nickname = serializers.CharField(required=False, allow_blank=True)
     is_staff = serializers.BooleanField(
         required=False, default=True

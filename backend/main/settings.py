@@ -22,12 +22,12 @@ sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-+9y7-(76!+viys!c4"
+SECRET_KEY = locals().get("SECRET_KEY", "django-insecure-default-key-change-me")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = locals().get("DEBUG", True)
+DEBUG = locals().get("DEBUG", False)
 
-ALLOWED_HOSTS = locals().get("ALLOWED_HOSTS", ["*"])
+ALLOWED_HOSTS = locals().get("ALLOWED_HOSTS", [])
 
 AUTH_USER_MODEL = "system.Users"
 USERNAME_FIELD = "username"
@@ -180,6 +180,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,  # 最小密码长度
+        }
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -251,10 +254,16 @@ CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.math_challenge"  # 加减乘除验证
 # ================================================= #
 # 如果为True，则将不使用白名单，并且将接受所有来源。默认为False
 # 允许跨域
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_ALL_ORIGINS = (
-    True  # 新版 ACCESS_CONTROL_ALLOW_ORIGIN = '*' ,不能与CORS_ALLOW_CREDENTIALS一起使用
-)
+CORS_ORIGIN_ALLOW_ALL = locals().get("CORS_ORIGIN_ALLOW_ALL", False)
+CORS_ALLOW_ALL_ORIGINS = CORS_ORIGIN_ALLOW_ALL
+
+# 如果 CORS_ORIGIN_ALLOW_ALL 为 False，则使用白名单
+if not CORS_ORIGIN_ALLOW_ALL:
+    CORS_ALLOWED_ORIGINS = locals().get("CORS_ALLOWED_ORIGINS", [
+        "http://localhost:8081",
+        "http://127.0.0.1:8081",
+    ])
+
 # 允许cookie
 # CORS_ALLOW_CREDENTIALS = True  # 指明在跨域访问中，后端是否支持对cookie的操作
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "None"
@@ -263,6 +272,22 @@ X_FRAME_OPTIONS = "SAMEORIGIN"  # SAMEORIGIN允许同源iframe嵌套、 DENY不�
 CORS_EXPOSE_HEADERS = [
     "Content-Disposition"
 ]  # Content-Disposition 头部添加到 Access-Control-Expose-Headers 中，允许客户端 JavaScript 访问该头部
+
+# ================================================= #
+# ******************* 安全头部配置 ***************** #
+# ================================================= #
+if not DEBUG:
+    # 生产环境安全配置
+    SECURE_SSL_REDIRECT = False  # 如果使用 HTTPS，设置为 True
+    SECURE_HSTS_SECONDS = 31536000  # HSTS 一年
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SESSION_COOKIE_SECURE = False  # 如果使用 HTTPS，设置为 True
+    CSRF_COOKIE_SECURE = False  # 如果使用 HTTPS，设置为 True
+    CSRF_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_HTTPONLY = True
 
 # ================================================= #
 # *************** REST_FRAMEWORK配置 *************** #

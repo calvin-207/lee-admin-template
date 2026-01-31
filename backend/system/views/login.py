@@ -74,11 +74,57 @@ class LoginView(CustomAPIView):
         five_minute_ago = datetime.now() - timedelta(hours=0, minutes=5, seconds=0)
         CaptchaStore.objects.filter(expiration__lte=five_minute_ago).delete()
 
+    def check_login_attempts(self, username):
+        """检查登录失败次数"""
+        from config import LOGIN_ERROR_RETRY_TIMES, LOGIN_ERROR_RETRY_TIMEOUT
+
+        if LOGIN_ERROR_RETRY_TIMES == 0:
+            return True, None
+
+        redis_conn = get_redis_connection("default")
+        key = f"login_attempts:{username}"
+        attempts = redis_conn.get(key)
+
+        if attempts and int(attempts) >= LOGIN_ERROR_RETRY_TIMES:
+            ttl = redis_conn.ttl(key)
+            return False, f"登录失败次数过多，请在 {ttl} 秒后重试"
+
+        return True, None
+
+    def record_login_failure(self, username):
+        """记录登录失败"""
+        from config import LOGIN_ERROR_RETRY_TIMES, LOGIN_ERROR_RETRY_TIMEOUT
+
+        if LOGIN_ERROR_RETRY_TIMES == 0:
+            return
+
+        redis_conn = get_redis_connection("default")
+        key = f"login_attempts:{username}"
+
+        # 增加失败次数
+        attempts = redis_conn.incr(key)
+
+        # 如果是第一次失败，设置过期时间
+        if attempts == 1:
+            redis_conn.expire(key, LOGIN_ERROR_RETRY_TIMEOUT)
+
+    def clear_login_attempts(self, username):
+        """清除登录失败记录"""
+        redis_conn = get_redis_connection("default")
+        key = f"login_attempts:{username}"
+        redis_conn.delete(key)
+
     def post(self, request):
         username = request.data.get("username", None)
         password = request.data.get("password", None)
         captchaKey = request.data.get("captchaKey", None)
         captcha = request.data.get("captcha", None)
+
+        # 检查登录失败次数
+        can_login, error_msg = self.check_login_attempts(username)
+        if not can_login:
+            save_login_log(request=request, status=False, msg=error_msg)
+            return ErrorResponse(msg=error_msg)
 
         open_capche = True
         capche_config = getSystemConfig(key="base.loginCaptcha", group=False)
@@ -122,6 +168,9 @@ class LoginView(CustomAPIView):
         if user and user.check_password(
             password
         ):  # check_password() 对明文进行加密,并验证
+            # 登录成功，清除失败记录
+            self.clear_login_attempts(username)
+
             data = LoginSerializer.get_token(user)
             msg = "登录成功"
             user.last_login = datetime.now()
@@ -137,6 +186,10 @@ class LoginView(CustomAPIView):
                     redis_conn.set(k, data["access"], TOKEN_EXPIRE)
             return DetailResponse(data=data, msg=msg)
         else:
+            # 登录失败，记录失败次数
+            if username:
+                self.record_login_failure(username)
+
             msg = "账号/密码错误"
             save_login_log(request=request, status=False, msg=msg, user=user)
             return ErrorResponse(msg=msg)
