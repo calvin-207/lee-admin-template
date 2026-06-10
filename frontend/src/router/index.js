@@ -12,6 +12,7 @@ import { cancelRequestState } from "@/store/cancelRequest";
 import { useUserState } from "@/store/userState";
 import { useTabsStore } from '@/store/tabs'
 import { withAutoBreadcrumb } from '@/router/autoBreadcrumb.js'
+import { resetDynamicRoutes } from '@/utils/routeGenerator'
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -123,10 +124,8 @@ async function updateDynamicRoutes() {
     let jsonUserState = userState?JSON.parse(userState) : null
     let menus = jsonUserState?jsonUserState?.menus : null
     if(menus){
-        
         dynamicRoutes[0].children = transformMenuComponents(menus)
-        let newdynamicRoutes = dynamicRoutes
-        await initRoutes(router,newdynamicRoutes)
+        await initRoutes(router, dynamicRoutes)
     }
 }
 
@@ -154,36 +153,39 @@ function transformMenuComponents(menus) {
     });
 }
 
-export async function initRoutes(dRoutes=dynamicRoutes){
-    let newrouter = await setAddRoute(dRoutes);
-    return newrouter
-}
-
-async function setAddRoute(dRoutes=dynamicRoutes) {
-	let routeChildren = await setFilterRoute(dRoutes=dynamicRoutes)
-    // 先移除所有动态路由（避免重复添加）
-    routeChildren.forEach(route => {
-        router.removeRoute(route.name); 
-    });
-    // 添加新路由
+export async function initRoutes(router, dRoutes=dynamicRoutes){
+    // 清理旧的动态路由（避免重复注册）
+    resetDynamicRoutes(router);
+    let routeChildren = await setFilterRoute(dRoutes)
     routeChildren.forEach((route) => {
-		router.addRoute(route);
-	});
-    router.addRoute(RedirectRoute);
-    router.addRoute(NotFound[0]);//外部404（非嵌套，未登录时有用）
-    
-    // 返回一个 Promise 确保路由更新完成
-    return new Promise(resolve => {
-        nextTick(() => resolve(router));
+        router.addRoute(route);
     });
+    router.addRoute(RedirectRoute);
+    router.addRoute(NotFound[0]);
 }
 
 //保留嵌套路由层级
 async function setFilterRoute(dRoutes=dynamicRoutes) {
-    let filterRoute = dRoutes
-	filterRoute[0].children = [...filterRoute[0].children,...CustomStaticRoutes, ...NotFound];
+    // 深拷贝避免修改原始 dynamicRoutes 导致重复累积
+    let filterRoute = JSON.parse(JSON.stringify(dRoutes));
+    // 重新绑定组件：JSON 序列化会丢失函数，需要从原始数据恢复 component
+    restoreComponents(dRoutes, filterRoute);
+    filterRoute[0].children = [...filterRoute[0].children,...CustomStaticRoutes, ...NotFound];
     filterRoute = withAutoBreadcrumb(filterRoute)
 	return filterRoute;
+}
+
+/**
+ * 递归恢复 component 函数（JSON序列化后丢失）
+ */
+function restoreComponents(source, target) {
+    if (!source || !target) return;
+    if (source.component) target.component = source.component;
+    if (source.children && target.children) {
+        for (let i = 0; i < source.children.length && i < target.children.length; i++) {
+            restoreComponents(source.children[i], target.children[i]);
+        }
+    }
 }
 
 //检查路由是否存在

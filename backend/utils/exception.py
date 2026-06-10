@@ -61,7 +61,7 @@ def CustomExceptionHandler(ex, context):
                     msg = "%s:%s" % (key, errorMsg[key][0])
                 else:
                     msg = errorMsg[key][0]
-        except:
+        except Exception:
             # {comment_author: {non_field_errors: ["无效数据。期待为字典类型，得到的是 str 。"]}, images: ["Not a valid string."]}
             if isinstance(errorMsg, list):
                 msg = errorMsg[0]

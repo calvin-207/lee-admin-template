@@ -152,6 +152,11 @@ class LoginView(CustomAPIView):
 
         user = Users.objects.filter(username=username).first()
 
+        if user and getattr(user, 'is_delete', False):
+                msg = "该账号已被删除"
+                save_login_log(request=request, status=False, msg=msg)
+                return ErrorResponse(msg=msg)
+
         if not user:
             return ErrorResponse(msg="账号/密码错误")
 

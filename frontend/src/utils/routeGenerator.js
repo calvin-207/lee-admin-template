@@ -61,10 +61,26 @@ async function setAddRoute(router,dRoutes=dynamicRoutes) {
 
 //保留嵌套路由层级
 async function setFilterRoute(router,dRoutes=dynamicRoutes) {
-    let filterRoute = dRoutes
-	filterRoute[0].children = [...filterRoute[0].children,...CustomStaticRoutes, ...NotFound];
+    // 深拷贝避免修改原始 dynamicRoutes 导致重复累积
+    let filterRoute = JSON.parse(JSON.stringify(dRoutes));
+    // 重新绑定组件：JSON 序列化会丢失函数，需要从原始数据恢复 component
+    restoreComponents(dRoutes, filterRoute);
+    filterRoute[0].children = [...filterRoute[0].children,...CustomStaticRoutes, ...NotFound];
     filterRoute = withAutoBreadcrumb(filterRoute)
 	return filterRoute;
+}
+
+/**
+ * 递归恢复 component 函数（JSON序列化后丢失）
+ */
+function restoreComponents(source, target) {
+    if (!source || !target) return;
+    if (source.component) target.component = source.component;
+    if (source.children && target.children) {
+        for (let i = 0; i < source.children.length && i < target.children.length; i++) {
+            restoreComponents(source.children[i], target.children[i]);
+        }
+    }
 }
 
 // 重置动态路由

@@ -80,7 +80,7 @@ def float2dot(str):
     """
     try:
         return "%.2f" % round(float(str), 2)
-    except:
+    except Exception:
         return str
 
 
@@ -255,10 +255,10 @@ def getrealip(request):
     try:
         real_ip = request.META["HTTP_X_FORWARDED_FOR"]
         regip = real_ip.split(",")[0]
-    except:
+    except Exception:
         try:
             regip = request.META["REMOTE_ADDR"]
-        except:
+        except Exception:
             regip = ""
     return regip
 

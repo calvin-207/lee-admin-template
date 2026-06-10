@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser,UserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 from utils.models import CoreModel,BaseModel, table_prefix
@@ -10,6 +10,36 @@ GENDER_CHOICES = (
     (1, "女"),
     (2, "男"),
 )
+
+class CustomUserManager(BaseUserManager):
+    """
+    自定义用户管理器
+    修复 Django 默认 UserManager 的 create_superuser 要求 email 必填的问题
+    """
+
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError("用户账号不能为空")
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        user = self.model(username=username, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("identity", 0)
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("超级用户必须设置 is_superuser=True")
+        return self.create_user(username, password, **extra_fields)
+
 
 class Users(AbstractBaseUser, CoreModel):
     IDENTITY_CHOICES = (
@@ -35,7 +65,7 @@ class Users(AbstractBaseUser, CoreModel):
     is_staff = models.BooleanField(verbose_name="是否员工",default=False)
     is_superuser = models.BooleanField(verbose_name="是否超级管理员",default=False)
 
-    objects = UserManager()
+    objects = CustomUserManager()
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = []

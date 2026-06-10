@@ -26,54 +26,79 @@ request.interceptors.request.use((config) => {
   return config;
 });
 
+// Token 刷新锁：防止多个 401 响应并发触发多次刷新
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function onTokenRefreshed(newToken) {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(callback) {
+  refreshSubscribers.push(callback);
+}
+
+function handleLogout() {
+  autoStorage.clear();
+  ElMessage.success("已退出登录!");
+  window.location.href = "/";
+}
+
 // http response 拦截器
 request.interceptors.response.use(
   async (response) => {
     if (response.data.code === 4001 || response.data.code === 401) {
-      try {
-        const refreshToken = getRereshToken();
-        const refreshResponse = await axios.post(
-          API_BASE_URL + "/api/token/refresh/",
-          {
-            refresh: refreshToken,
-          },
-        );
-        if (
-          refreshResponse.data.hasOwnProperty("code") &&
-          refreshResponse.data.code === 4001
-        ) {
+      const refreshToken = getRereshToken();
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshResponse = await axios.post(
+            API_BASE_URL + "/api/token/refresh/",
+            { refresh: refreshToken },
+          );
+          if (
+            refreshResponse.data.hasOwnProperty("code") &&
+            refreshResponse.data.code === 4001
+          ) {
+            ElMessageBox.alert("登录信息失效,请重新登录！", "登录失效", {
+              confirmButtonText: "确定",
+              type: "warning",
+              callback: () => handleLogout(),
+            });
+            return response;
+          }
+          // 刷新成功，存储新 token
+          setToken("logintoken", refreshResponse.data.access);
+          setRefreshToken("refreshtoken", refreshResponse.data.refresh);
+          // 通知所有等待中的请求使用新 token 重试
+          onTokenRefreshed(refreshResponse.data.access);
+          // 用新 token 重发当前请求
+          response.config.headers.Authorization = sysConfig.TOKEN_PREFIX + refreshResponse.data.access;
+          const retryResponse = await request(response.config);
+          return retryResponse;
+        } catch (refreshError) {
+          console.error("Failed to refresh access token:", refreshError);
+          refreshSubscribers = [];
           ElMessageBox.alert("登录信息失效,请重新登录！", "登录失效", {
             confirmButtonText: "确定",
             type: "warning",
-            callback: (action) => {
-              //跳转登录页   callback点击确定按钮后的回调函数
-              autoStorage.clear();
-              ElMessage.success("已退出登录!");
-              window.location.href = "/";
-            },
+            callback: () => handleLogout(),
           });
-        } else {
-          // 刷新成功，将新的 Access Token 存储起来
-          setToken("logintoken", refreshResponse.data.access);
-          setRefreshToken("refreshtoken", refreshResponse.data.refresh);
-          response.data.msg = "已自动刷新登录信息";
+          return response;
+        } finally {
+          isRefreshing = false;
         }
-        return response;
-      } catch (refreshError) {
-        console.error("Failed to refresh access token:", refreshError);
-        // 刷新 Token 失败，可能是 Refresh Token 过期了,需要重新登录
-        ElMessageBox.alert("登录信息失效,请重新登录！", "登录失效", {
-          confirmButtonText: "确定",
-          type: "warning",
-          callback: (action) => {
-            //跳转登录页   callback点击确定按钮后的回调函数
-            autoStorage.clear();
-            ElMessage.success("已退出登录!");
-            window.location.href = "/";
-          },
-        });
-        return response;
       }
+
+      // 如果正在刷新中，将当前请求加入等待队列
+      return new Promise((resolve) => {
+        addRefreshSubscriber((newToken) => {
+          response.config.headers.Authorization = sysConfig.TOKEN_PREFIX + newToken;
+          resolve(request(response.config));
+        });
+      });
     } else {
       return response;
     }

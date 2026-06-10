@@ -82,7 +82,7 @@ class ImportExportMixin:
             if file_suffix.lower() in white_list:
                 return True
             return False
-        except:
+        except Exception:
             return False
 
     def is_number(self, num):
@@ -179,7 +179,7 @@ class ImportExportMixin:
                 self.inserImg(ws, val, index + 2, h_index + 1)
                 if h_index != 0 and 10 > df_len_max[h_index]:
                     df_len_max[h_index] = 10
-            except:
+            except Exception:
                 self.cell_nomall_data(ws, index, h_index, df_len_max, val, left_center)
         else:
             self.cell_nomall_data(ws, index, h_index, df_len_max, val, left_center)
@@ -380,7 +380,7 @@ class ImportExportMixin:
                                     )
                                     if 10 > df_len_max[h_index]:
                                         df_len_max[h_index] = 10
-                                except:
+                                except Exception:
                                     pass
                         else:
                             # 普通字段处理

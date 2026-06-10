@@ -69,7 +69,7 @@ class UserSerializer(CustomModelSerializer):
     def get_deptName(self, obj):
         try:
             return obj.dept.name
-        except:
+        except Exception:
             return ""
 
     def get_roleNames(self, obj):

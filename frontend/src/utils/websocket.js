@@ -68,7 +68,7 @@ const leeWebSocket = {
 
     leeWebSocket.websocket.onopen = () => {
       leeWebSocket.socketOpen = true;
-      useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
+      useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
       leeWebSocket.isReconnect = true;
       leeWebSocket.startHeartbeat();
     };
@@ -97,7 +97,7 @@ const leeWebSocket = {
     } else {
       clearInterval(leeWebSocket.hearbeatTimer);
       leeWebSocket.socketOpen = false;
-      useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
+      useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
     }
   },
   closeWebSocket() {
@@ -105,7 +105,7 @@ const leeWebSocket = {
     leeWebSocket.websocket && leeWebSocket.websocket.close();
     leeWebSocket.websocket = null;
     leeWebSocket.socketOpen = false;
-    useleeWebSocket().setWebSocketState(leeWebSocket.socketOpen);
+    useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
   },
   reconnectWebSocket() {
     if (leeWebSocket.websocket && !leeWebSocket.isReconnect) {

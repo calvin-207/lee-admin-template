@@ -137,7 +137,7 @@ def get_browser(
         if ua_string:
             user_agent = parse(ua_string)
             browser = user_agent.get_browser()
-    except:
+    except Exception:
         pass
     return browser
 
@@ -158,7 +158,7 @@ def get_os(
         if ua_string:
             user_agent = parse(ua_string)
             theos = user_agent.get_os()
-    except:
+    except Exception:
         pass
     return theos
 
