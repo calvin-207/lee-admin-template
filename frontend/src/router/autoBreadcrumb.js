@@ -16,6 +16,7 @@ function generateBreadcrumb(route, allRoutes, parentPath = '') {
 
     // 查找父路由
     const parentRoute = allRoutes.find(r => {
+        if (!r || !r.path) return false
         const parentSegments = r.path.split('/').filter(Boolean)
         return parentSegments.length === pathSegments.length - 1 && route.path.startsWith(r.path + '/')
     })
@@ -56,7 +57,9 @@ function generateBreadcrumb(route, allRoutes, parentPath = '') {
  * @returns {RouteRecordRaw[]} 处理后的路由配置
  */
 export function withAutoBreadcrumb(routes) {
-    return routes.map(route => {
+    return routes
+        .filter(route => route && typeof route === 'object')
+        .map(route => {
         const processedRoute = { ...route }
 
         // 处理子路由

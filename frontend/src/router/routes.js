@@ -16,6 +16,28 @@ export const dynamicRoutes = [
 
 //自定义layout的children的静态路由，优先级高于后台api的动态路由
 export const CustomStaticRoutes = [
+  // 小程序装修
+  {
+    path: "/leediy/list",
+    name: "leediyList",
+    component: () => import("@/views/leediy/list.vue"),
+    meta: {
+      title: "装修列表",
+      requireAuth: true,
+      hidden: false,
+      icon: "Grid",
+    },
+  },
+  {
+    path: "/leediy/decorate",
+    name: "leediyDecorate",
+    component: () => import("@/views/leediy/decorate.vue"),
+    meta: {
+      title: "装修编辑",
+      requireAuth: true,
+      hidden: true,
+    },
+  },
   {
     path: "/404",
     name: "404",
