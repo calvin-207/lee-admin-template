@@ -36,6 +36,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from utils.streamingmedia_response import streamingmedia_serve
 from system.views.login import LoginView, CaptchaView
 from system.views.frontend import h5web
+from system.views.leeapp import leeapp_index, leeapp_static
 
 urlpatterns = [
     path(
@@ -90,12 +91,20 @@ urlpatterns += [
     path("api/captcha/", CaptchaView.as_view()),
 
     path('api/leemessages/', include('apps.leemessages.urls')),
+    path('api/leediy/', include('apps.leediy.urls')),
 
 ]
 
 urlpatterns += [
     # 集成部署后端管理页面和uniapp h5页面
     path("h5/", h5web, name="h5端页面部署"),
+
+    # leeapp 装修 H5 端
+    path("leeapp/", leeapp_index, name="leeapp端页面"),
+    path("leeapp/static/<path:path>", leeapp_static, name="leeapp静态资源"),
+    # leeapp vue-router history 模式 fallback
+    re_path(r'^leeapp(/.*)?$', leeapp_index, name="leeapp路由兜底"),
+
     path("favicon.ico", RedirectView.as_view(url=r"static/favicon.ico")),
     path(
         "",

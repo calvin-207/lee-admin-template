@@ -1119,6 +1119,8 @@ class Initialize:
                 roles = it.pop("role", []) or []
                 if roles:
                     roles = Role.objects.filter(key__in=roles)
+                # dept 是 ManyToManyField，不能作为 update_or_create 的 defaults 直接传入
+                it.pop("dept_id", None)
                 it['password'] = hashed_password
                 (obj, status) = Users.objects.update_or_create(username=it["username"], defaults=it)
 

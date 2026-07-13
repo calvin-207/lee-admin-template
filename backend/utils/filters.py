@@ -91,12 +91,12 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
         if request.user.is_superuser:
             return queryset
 
-        # 0. 获取用户部门信息
+        # 0. 获取用户部门信息（支持多部门）
         user = request.user
-        user_dept_id = getattr(user, "dept_id", None)
+        user_dept_ids = list(user.dept.values_list("id", flat=True))
 
         # 无部门用户只能查看自己的数据
-        if not user_dept_id:
+        if not user_dept_ids:
             return (
                 queryset.filter(creator=user)
                 if hasattr(queryset.model, "creator")
@@ -110,7 +110,7 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
         # 2. 获取用户所有有效角色的数据权限
         roles = user.role.filter(status=True)
         if not roles.exists():  # 如果用户没有关联角色则返回本部门数据
-            return queryset.filter(dept_belong_id=user_dept_id)
+            return queryset.filter(dept_belong_id__in=user_dept_ids)
 
         role_ids = roles.values_list("id", flat=True)
 
@@ -168,10 +168,14 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
         if max_data_scope == 0:  # 仅本人数据
             return queryset.filter(creator=user)
 
-        # 5. 获取需要过滤的部门列表
-        dept_ids = self._get_permitted_dept_ids(
-            user_dept_id, role_ids, max_data_scope, is_menu=is_menu
-        )
+        # 5. 获取需要过滤的部门列表（基于用户所有部门计算并集）
+        dept_ids = set()
+        for _dept_id in user_dept_ids:
+            dept_ids.update(
+                self._get_permitted_dept_ids(
+                    _dept_id, role_ids, max_data_scope, is_menu=is_menu
+                )
+            )
 
         # 6. 应用部门过滤
         if queryset.model._meta.model_name == "dept":
@@ -210,7 +214,7 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
                 ).values_list("dept__id", flat=True)
             dept_ids.update(custom_depts)
 
-        return list(dept_ids) if dept_ids else [user_dept_id]  # 默认至少包含本部门
+        return list(dept_ids) if dept_ids else [user_dept_id]  # 默认至少包含当前部门
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):

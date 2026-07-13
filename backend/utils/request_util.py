@@ -209,7 +209,14 @@ def save_login_log(request, status=True, msg="", user=None):
     analysis_data["browser"] = get_browser(request)
     analysis_data["os"] = get_os(request)
     analysis_data["creator_id"] = user_id
-    analysis_data["dept_belong"] = getattr(request.user, "dept_id", "")
+    _req_user = getattr(request, "user", None)
+    _dept_id = ""
+    if _req_user and hasattr(_req_user, "dept"):
+        try:
+            _dept_id = _req_user.dept.first().id if _req_user.dept.exists() else ""
+        except Exception:
+            _dept_id = ""
+    analysis_data["dept_belong"] = _dept_id
     analysis_data["status"] = status
     analysis_data["msg"] = msg
     LoginLog.objects.create(**analysis_data)

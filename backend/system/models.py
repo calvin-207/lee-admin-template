@@ -55,7 +55,7 @@ class Users(AbstractBaseUser, CoreModel):
     nickname = models.CharField(max_length=100, help_text="用户昵称", verbose_name="用户昵称",default="", null=True, blank=True)
     gender = models.SmallIntegerField(choices=GENDER_CHOICES, verbose_name="性别", null=True, blank=True, help_text="性别",default=0)
     role = models.ManyToManyField(to='Role', verbose_name='关联角色', db_constraint=False,related_name="role_users", help_text="关联角色")
-    dept = models.ForeignKey(to='Dept', verbose_name='所属部门', on_delete=models.PROTECT, db_constraint=False, null=True,blank=True, help_text="关联部门")
+    dept = models.ManyToManyField(to='Dept', verbose_name='所属部门', db_constraint=False, blank=True, related_name="dept_users", help_text="关联部门")
     
     login_error_nums = models.IntegerField(default=0, verbose_name="登录错误次数", help_text="登录错误次数")
     identity = models.SmallIntegerField(choices=IDENTITY_CHOICES, verbose_name="身份标识", null=True, blank=True, default=2,help_text="身份标识")

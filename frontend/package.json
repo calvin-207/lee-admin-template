@@ -15,7 +15,10 @@
     "build": "vite build",
     "build:backend": "vite build && npm run copy-dist",
     "copy-dist": "node src/utils/copy-dist.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -51,6 +54,10 @@
     "vite": "^6.3.5",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vue-setup-extend": "^0.4.0",
-    "vite-svg-loader": "^5.1.0"
+    "vite-svg-loader": "^5.1.0",
+    "vitest": "^3.1.4",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.1",
+    "@vitest/coverage-v8": "^3.1.4"
   }
 }

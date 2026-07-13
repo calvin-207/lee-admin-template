@@ -104,7 +104,11 @@ class ApiLoggingMiddleware(MiddlewareMixin):
             "req_ip": request_ip,
             "creator": tmpuser,
             "creator_name": tmpuser.username if tmpuser else "",
-            "dept_belong": getattr(request.user, "dept_id", None),
+            "dept_belong": (
+                tmpuser.dept.first().id
+                if tmpuser and hasattr(tmpuser, "dept") and tmpuser.dept.exists()
+                else None
+            ),
             "req_method": request.method,
             "req_path": request.request_path,
             "req_body": body,

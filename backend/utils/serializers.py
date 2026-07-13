@@ -71,7 +71,7 @@ class CustomModelSerializer(ModelSerializer):
                     and not validated_data.get(self.dept_belong_id_field_name, None)
                 ):
                     validated_data[self.dept_belong_id_field_name] = getattr(
-                        self.request.user, "dept_id", None
+                        self.request.user.dept.first().id if self.request.user.dept.exists() else None
                     )
         return super().create(validated_data)
 

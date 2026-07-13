@@ -264,4 +264,28 @@ Api.delOwnMessage = (params) =>
 Api.readOwnMessage = (params) =>
   ajaxPost({ url: `/api/system/msg/readownmsg/`, params });
 
+
+/**
+ *小程序装修
+ * */
+// 装修页面列表
+Api.leediyPageList = (params) => ajaxGet({ url: `/api/leediy/page/`, params });
+// 装修页面详情
+Api.leediyPageDetail = (params) => ajaxGetDetailByID({ url: `/api/leediy/page/`, params });
+// 新建装修页面
+Api.leediyPageAdd = (params) => ajaxPost({ url: `/api/leediy/page/`, params });
+// 编辑装修页面
+Api.leediyPageEdit = (params) => ajaxPut({ url: `/api/leediy/page/${params.id}/`, params: { ...params, id: undefined } });
+// 删除装修页面
+Api.leediyPageDelete = (params) => ajaxDelete({ url: `/api/leediy/page/${params.id}/`, params });
+// 设为默认(启用)
+Api.leediyPageSetUse = (params) => ajaxPut({ url: `/api/leediy/use/${params.id}/`, params });
+// 装修编辑器初始化(组件库+模板+链接)
+Api.leediyInit = (params) => ajaxGet({ url: `/api/leediy/init/`, params });
+// 页面模板
+Api.leediyTemplate = (params) => ajaxGet({ url: `/api/leediy/template/`, params });
+// 自定义链接
+Api.leediyLink = (params) => ajaxGet({ url: `/api/leediy/link/`, params });
+
 export default Api;
+

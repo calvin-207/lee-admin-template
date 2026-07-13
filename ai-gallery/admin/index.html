@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>探春风 - 后台管理系统</title>
+<style>
+:root {
+  --primary: #E07A5F;
+  --primary-dark: #c4634a;
+  --secondary: #81B29A;
+  --bg: #f5f0ea;
+  --bg-card: #ffffff;
+  --text: #2d2a26;
+  --text2: #7a7168;
+  --text3: #b0a89f;
+  --border: #e0d5c9;
+  --danger: #d9534f;
+  --warning: #f0ad4e;
+  --success: #5cb85c;
+  --info: #5bc0de;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Layout */
+#app { display: flex; height: 100vh; }
+.sidebar {
+  width: 220px;
+  background: var(--text);
+  color: #fff;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-brand {
+  padding: 24px 20px;
+  font-size: 18px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-brand span { color: var(--primary); }
+.sidebar-menu { padding: 16px 0; flex: 1; overflow-y: auto; }
+.menu-item {
+  padding: 12px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.7);
+  transition: all 0.2s;
+}
+.menu-item:hover, .menu-item.active {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.menu-item.active { border-left: 3px solid var(--primary); padding-left: 21px; }
+.menu-icon { font-size: 18px; width: 24px; text-align: center; }
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 220px;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* Header */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.topbar-title { font-size: 22px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  padding: 8px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+}
+.user-avatar { width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
+
+/* Cards */
+.card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+.stat-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-change {
+  font-size: 12px;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.stat-change.up { background: rgba(92,184,92,0.1); color: var(--success); }
+.stat-change.down { background: rgba(217,83,79,0.1); color: var(--danger); }
+.stat-change span { font-weight: 600; }
+
+/* Content cards */
+.content-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-title { font-size: 16px; font-weight: 600; }
+.card-body { padding: 20px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 12px 16px; background: #faf8f5; font-weight: 600; color: var(--text2); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:hover td { background: #faf8f5; }
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-pending { background: #fff3cd; color: #856404; }
+.badge-approved { background: #d4edda; color: #155724; }
+.badge-rejected { background: #f8d7da; color: #721c24; }
+.badge-featured { background: rgba(224,122,95,0.1); color: var(--primary); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+.btn:hover { opacity: 0.85; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-secondary { background: var(--text3); color: #fff; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* Filters */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filter-input, .filter-select {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+}
+.filter-input { min-width: 200px; }
+.filter-select { min-width: 140px; }
+
+/* Image preview */
+.img-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px;
+}
+.page-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+.page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title { font-size: 18px; font-weight: 600; }
+.modal-close { font-size: 24px; cursor: pointer; color: var(--text3); }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Audit detail in modal */
+.audit-img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 8px; background: #1a1a1a; }
+.audit-params { margin-top: 16px; }
+.param-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.param-label { width: 120px; color: var(--text3); font-size: 13px; }
+.param-value { flex: 1; font-size: 13px; word-break: break-all; }
+.audit-actions { display: flex; gap: 12px; margin-top: 20px; }
+.reject-reason { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; margin-top: 12px; }
+
+/* Login page */
+.login-page {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+.login-box {
+  background: var(--bg-card);
+  padding: 40px;
+  border-radius: 16px;
+  width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.login-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+.login-sub { font-size: 14px; color: var(--text3); text-align: center; margin-bottom: 28px; }
+.login-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 16px;
+  outline: none;
+}
+.login-input:focus { border-color: var(--primary); }
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Hidden */
+.hidden { display: none !important; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar-brand { padding: 16px 8px; font-size: 14px; }
+  .menu-item { padding: 12px; justify-content: center; }
+  .menu-item span:last-child { display: none; }
+  .main-content { margin-left: 60px; }
+  .card-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- LOGIN -->
+  <div id="loginPage" class="login-page">
+    <div class="login-box">
+      <div class="login-title">探春风</div>
+      <div class="login-sub">后台管理系统</div>
+      <input class="login-input" id="loginUser" placeholder="用户名" value="admin">
+      <input class="login-input" id="loginPass" type="password" placeholder="密码" value="">
+      <button class="login-btn" onclick="doLogin()">登录</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardPage" class="hidden">
+    <div class="sidebar">
+      <div class="sidebar-brand"><span>探</span>春风</div>
+      <div class="sidebar-menu">
+        <div class="menu-item active" onclick="showPage('dashboard')">
+          <span class="menu-icon">📊</span><span>仪表盘</span>
+        </div>
+        <div class="menu-item" onclick="showPage('audit')">
+          <span class="menu-icon">🖼</span><span>图片审核</span>
+        </div>
+        <div class="menu-item" onclick="showPage('users')">
+          <span class="menu-icon">👥</span><span>用户管理</span>
+        </div>
+        <div class="menu-item" onclick="showPage('tags')">
+          <span class="menu-icon">🏷</span><span>标签管理</span>
+        </div>
+      </div>
+      <div class="sidebar-footer">探春风 v1.0</div>
+    </div>
+    <div class="main-content">
+      <!-- DASHBOARD -->
+      <div id="page-dashboard">
+        <div class="topbar">
+          <div class="topbar-title">仪表盘</div>
+          <div class="topbar-right">
+            <div class="user-badge">
+              <div class="user-avatar">A</div>
+              <span>管理员</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="doLogout()">退出</button>
+          </div>
+        </div>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="stat-label">总图片数</div>
+            <div class="stat-value" id="statTotalImages">156</div>
+            <div class="stat-change up"><span>+12</span> 今日新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">注册用户</div>
+            <div class="stat-value" id="statTotalUsers">328</div>
+            <div class="stat-change up"><span>+15</span> 今日新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">总浏览量</div>
+            <div class="stat-value" id="statTotalViews">15,847</div>
+            <div class="stat-change up"><span>+1,247</span> 今日</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">待审核</div>
+            <div class="stat-value" style="color:var(--warning)" id="statPending">12</div>
+            <div class="stat-change down"><span>-3</span> 较昨日</div>
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title">近7天趋势</div>
+          </div>
+          <div class="card-body">
+            <div id="trendChart" style="height:280px;display:flex;align-items:flex-end;gap:20px;justify-content:center;padding:20px 0;">
+              <!-- Simple bar chart -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUDIT -->
+      <div id="page-audit" class="hidden">
+        <div class="topbar">
+          <div class="topbar-title">图片审核</div>
+          <div class="topbar-right">
+            <div class="user-badge"><div class="user-avatar">A</div><span>管理员</span></div>
+            <button class="btn btn-secondary btn-sm" onclick="doLogout()">退出</button>
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="card-header">
+            <div>
+              <span class="card-title">图片列表</span>
+              <span style="margin-left:12px;color:var(--text3);font-size:13px">
+                待审核 <b style="color:var(--warning)">12</b> ·
+                已通过 <b style="color:var(--success)">140</b> ·
+                已拒绝 <b style="color:var(--danger)">4</b>
+              </span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-success btn-sm" onclick="batchApprove()">批量通过</button>
+              <button class="btn btn-danger btn-sm" onclick="batchReject()">批量拒绝</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="filter-bar">
+              <select class="filter-select" id="auditFilter" onchange="renderAuditList()">
+                <option value="">全部状态</option>
+                <option value="pending" selected>待审核</option>
+                <option value="approved">已通过</option>
+                <option value="rejected">已拒绝</option>
+              </select>
+              <input class="filter-input" id="auditSearch" placeholder="搜索标题/Prompt/上传者" onkeydown="if(event.key==='Enter')renderAuditList()">
+              <button class="btn btn-primary btn-sm" onclick="renderAuditList()">搜索</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                  <th>图片</th>
+                  <th>标题</th>
+                  <th>Prompt预览</th>
+                  <th>上传者</th>
+                  <th>上传时间</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody"></tbody>
+            </table>
+            <div class="pagination" id="auditPagination"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="page-users" class="hidden">
+        <div class="topbar">
+          <div class="topbar-title">用户管理</div>
+          <div class="topbar-right">
+            <div class="user-badge"><div class="user-avatar">A</div><span>管理员</span></div>
+            <button class="btn btn-secondary btn-sm" onclick="doLogout()">退出</button>
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title">用户列表</div>
+          </div>
+          <div class="card-body">
+            <div class="filter-bar">
+              <input class="filter-input" placeholder="搜索用户昵称/openid">
+              <select class="filter-select"><option>全部平台</option><option>微信</option><option>抖音</option><option>QQ</option></select>
+            </div>
+            <table>
+              <thead>
+                <tr><th>用户ID</th><th>昵称</th><th>平台</th><th>上传数</th><th>收藏数</th><th>注册时间</th><th>状态</th><th>操作</th></tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAGS -->
+      <div id="page-tags" class="hidden">
+        <div class="topbar">
+          <div class="topbar-title">标签管理</div>
+          <div class="topbar-right">
+            <div class="user-badge"><div class="user-avatar">A</div><span>管理员</span></div>
+            <button class="btn btn-secondary btn-sm" onclick="doLogout()">退出</button>
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title">标签列表</div>
+            <button class="btn btn-primary btn-sm">+ 新建标签</button>
+          </div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>标签名</th><th>类型</th><th>使用次数</th><th>排序</th><th>操作</th></tr></thead>
+              <tbody id="tagsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT MODAL -->
+  <div id="auditModal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">审核详情</div>
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <img class="audit-img" id="modalImg" src="" alt="">
+        <div class="audit-params" id="modalParams"></div>
+        <textarea class="reject-reason" id="rejectReason" placeholder="如需拒绝，请填写拒绝原因..." style="display:none"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="modalReject()">拒绝</button>
+        <button class="btn btn-success" onclick="modalApprove()">通过</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== MOCK DATA =====
+const mockImages = [];
+const styles = ['写实','二次元','赛博朋克','国风','抽象','摄影','插画'];
+const platforms = ['weixin','douyin','qq'];
+const statusList = ['pending','approved','rejected'];
+
+for (let i = 0; i < 30; i++) {
+  mockImages.push({
+    id: `img_${1000 + i}`,
+    url: `https://placehold.co/400x${300 + Math.floor(Math.random()*200)}/E07A5F/ffffff?text=${encodeURIComponent('探春风')}`,
+    thumbUrl: `https://placehold.co/200x200/E07A5F/ffffff?text=${i+1}`,
+    title: ['春风十里','山水如画','城市霓虹','花间梦','星河入梦','月下独酌'][i % 6] + (i >= 6 ? ` #${i+1}` : ''),
+    prompt: 'a portrait of a beautiful woman, golden hour lighting, highly detailed face, 8k resolution',
+    negativePrompt: 'low quality, blurry, deformed',
+    model: ['SDXL','Midjourney v6','Flux.1'][i % 3],
+    sampler: 'DPM++ 2M Karras',
+    steps: 30,
+    cfgScale: 7.5,
+    seed: String(300000000 + i),
+    width: 1024, height: 1024,
+    tags: [styles[i % 7], styles[(i+2) % 7]],
+    style: styles[i % 7],
+    uploaderId: `user_${200 + i}`,
+    uploaderNickname: `用户${200 + i}`,
+    platform: platforms[i % 3],
+    auditStatus: i < 12 ? 'pending' : (i < 28 ? 'approved' : 'rejected'),
+    auditReason: i >= 28 ? '图片包含违规内容' : '',
+    uploadDate: new Date(Date.now() - i * 3600000 * 3).toISOString(),
+    views: Math.floor(Math.random() * 5000),
+    likes: Math.floor(Math.random() * 500)
+  });
+}
+
+const mockUsers = [
+  { id:'user_200', nickname:'春风十里', platform:'weixin', uploadCount:5, favoriteCount:12, createdAt:'2026-07-01T08:00:00Z', isBanned:false },
+  { id:'user_201', nickname:'AI艺术家', platform:'douyin', uploadCount:8, favoriteCount:3, createdAt:'2026-07-02T10:00:00Z', isBanned:false },
+  { id:'user_202', nickname:'像素旅人', platform:'qq', uploadCount:2, favoriteCount:25, createdAt:'2026-07-03T14:00:00Z', isBanned:false },
+  { id:'user_203', nickname:'违规用户', platform:'weixin', uploadCount:0, favoriteCount:0, createdAt:'2026-07-05T09:00:00Z', isBanned:true },
+];
+
+const mockTags = [
+  { id:'tag_1', name:'写实', type:'style', count:45, sortOrder:0 },
+  { id:'tag_2', name:'二次元', type:'style', count:38, sortOrder:1 },
+  { id:'tag_3', name:'赛博朋克', type:'style', count:22, sortOrder:2 },
+  { id:'tag_4', name:'人像', type:'subject', count:56, sortOrder:3 },
+  { id:'tag_5', name:'风景', type:'subject', count:41, sortOrder:4 },
+  { id:'tag_6', name:'国风', type:'style', count:19, sortOrder:5 },
+];
+
+let currentPage = 'dashboard';
+let currentAuditPage = 1;
+let auditPageSize = 10;
+let selectedIds = new Set();
+let currentModalId = null;
+
+// ===== AUTH =====
+function doLogin() {
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  if (!user || !pass) { alert('请输入用户名和密码'); return; }
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('dashboardPage').classList.remove('hidden');
+  initDashboard();
+}
+function doLogout() {
+  document.getElementById('dashboardPage').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+
+// ===== NAV =====
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.querySelectorAll('#page-dashboard, #page-audit, #page-users, #page-tags').forEach(el => el.classList.add('hidden'));
+  document.getElementById('page-' + page).classList.remove('hidden');
+  if (page === 'audit') renderAuditList();
+  if (page === 'users') renderUsers();
+  if (page === 'tags') renderTags();
+}
+
+// ===== DASHBOARD =====
+function initDashboard() {
+  // Trend chart
+  const trendEl = document.getElementById('trendChart');
+  const days = ['07-05','07-06','07-07','07-08','07-09','07-10','07-11'];
+  const uploads = [5,7,3,8,6,10,8];
+  const max = Math.max(...uploads);
+  trendEl.innerHTML = days.map((d,i) => `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="width:40px;background:var(--primary);border-radius:6px 6px 0 0;transition:height 0.5s" style="height:${uploads[i]/max*200}px;height:${uploads[i]/max*200}px"></div>
+      <span style="font-size:12px;color:var(--text3)">${d}</span>
+      <span style="font-size:12px;font-weight:600">${uploads[i]}</span>
+    </div>
+  `).join('');
+}
+
+// ===== AUDIT =====
+function renderAuditList() {
+  const filter = document.getElementById('auditFilter').value;
+  const keyword = document.getElementById('auditSearch').value.toLowerCase();
+  let list = mockImages;
+  if (filter) list = list.filter(i => i.auditStatus === filter);
+  if (keyword) list = list.filter(i =>
+    i.title.includes(keyword) || i.prompt.includes(keyword) || i.uploaderNickname.includes(keyword)
+  );
+
+  const start = (currentAuditPage - 1) * auditPageSize;
+  const pageList = list.slice(start, start + auditPageSize);
+
+  document.getElementById('auditTableBody').innerHTML = pageList.map(img => `
+    <tr>
+      <td><input type="checkbox" ${selectedIds.has(img.id)?'checked':''} onchange="toggleSelect('${img.id}')"></td>
+      <td><img class="img-preview" src="${img.thumbUrl}" onclick="openModal('${img.id}')"></td>
+      <td><b>${img.title}</b></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${img.prompt}</td>
+      <td>${img.uploaderNickname}<br><small style="color:var(--text3)">${img.platform}</small></td>
+      <td>${formatDate(img.uploadDate)}</td>
+      <td>${statusBadge(img.auditStatus)}</td>
+      <td>
+        ${img.auditStatus === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="approveOne('${img.id}')">通过</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectOne('${img.id}')">拒绝</button>
+        ` : '<span style="color:var(--text3);font-size:12px">已处理</span>'}
+        <button class="btn btn-secondary btn-sm" onclick="openModal('${img.id}')">详情</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Pagination
+  const totalPages = Math.ceil(list.length / auditPageSize);
+  document.getElementById('auditPagination').innerHTML = Array.from({length: totalPages}, (_,i) => `
+    <button class="page-btn ${i+1===currentAuditPage?'active':''}" onclick="currentAuditPage=${i+1};renderAuditList()">${i+1}</button>
+  `).join('');
+}
+
+function statusBadge(s) {
+  const map = { pending: ['badge-pending','待审核'], approved: ['badge-approved','已通过'], rejected: ['badge-rejected','已拒绝'] };
+  return `<span class="badge ${map[s][0]}">${map[s][1]}</span>`;
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+}
+function toggleSelectAll() {
+  const checked = document.getElementById('selectAll').checked;
+  document.querySelectorAll('#auditTableBody input[type="checkbox"]').forEach(cb => cb.checked = checked);
+}
+
+function approveOne(id) {
+  const img = mockImages.find(i => i.id === id);
+  if (img) { img.auditStatus = 'approved'; renderAuditList(); showToast('已通过'); }
+}
+function rejectOne(id) {
+  const img = mockImages.find(i => i.id === id);
+  if (img) { img.auditStatus = 'rejected'; img.auditReason = '图片内容不符合规范'; renderAuditList(); showToast('已拒绝'); }
+}
+function batchApprove() {
+  selectedIds.forEach(id => { const img = mockImages.find(i => i.id === id); if(img) img.auditStatus = 'approved'; });
+  selectedIds.clear();
+  renderAuditList();
+  showToast('批量通过成功');
+}
+function batchReject() {
+  selectedIds.forEach(id => { const img = mockImages.find(i => i.id === id); if(img) { img.auditStatus = 'rejected'; img.auditReason = '批量拒绝'; } });
+  selectedIds.clear();
+  renderAuditList();
+  showToast('批量拒绝成功');
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  currentModalId = id;
+  const img = mockImages.find(i => i.id === id);
+  if (!img) return;
+  document.getElementById('modalImg').src = img.url;
+  document.getElementById('modalParams').innerHTML = `
+    <div class="param-row"><div class="param-label">标题</div><div class="param-value">${img.title}</div></div>
+    <div class="param-row"><div class="param-label">Prompt</div><div class="param-value">${img.prompt}</div></div>
+    <div class="param-row"><div class="param-label">Negative</div><div class="param-value">${img.negativePrompt}</div></div>
+    <div class="param-row"><div class="param-label">模型</div><div class="param-value">${img.model}</div></div>
+    <div class="param-row"><div class="param-label">采样器</div><div class="param-value">${img.sampler}</div></div>
+    <div class="param-row"><div class="param-label">步数/CFG</div><div class="param-value">${img.steps} / ${img.cfgScale}</div></div>
+    <div class="param-row"><div class="param-label">Seed</div><div class="param-value">${img.seed}</div></div>
+    <div class="param-row"><div class="param-label">标签</div><div class="param-value">${img.tags.join(', ')}</div></div>
+    <div class="param-row"><div class="param-label">上传者</div><div class="param-value">${img.uploaderNickname} (${img.platform})</div></div>
+    <div class="param-row"><div class="param-label">状态</div><div class="param-value">${statusBadge(img.auditStatus)}</div></div>
+  `;
+  document.getElementById('rejectReason').style.display = 'none';
+  document.getElementById('auditModal').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('auditModal').classList.add('hidden');
+  currentModalId = null;
+}
+function modalApprove() {
+  if (currentModalId) approveOne(currentModalId);
+  closeModal();
+}
+function modalReject() {
+  const reasonBox = document.getElementById('rejectReason');
+  if (reasonBox.style.display === 'none') {
+    reasonBox.style.display = 'block';
+    reasonBox.focus();
+  } else {
+    if (currentModalId) {
+      const img = mockImages.find(i => i.id === currentModalId);
+      if (img) { img.auditStatus = 'rejected'; img.auditReason = reasonBox.value || '内容不合规'; }
+      renderAuditList();
+      showToast('已拒绝');
+    }
+    closeModal();
+  }
+}
+
+// ===== USERS =====
+function renderUsers() {
+  document.getElementById('usersTableBody').innerHTML = mockUsers.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.nickname}</td>
+      <td>${u.platform}</td>
+      <td>${u.uploadCount}</td>
+      <td>${u.favoriteCount}</td>
+      <td>${formatDate(u.createdAt)}</td>
+      <td>${u.isBanned ? '<span class="badge badge-rejected">已封禁</span>' : '<span class="badge badge-approved">正常</span>'}</td>
+      <td>
+        <button class="btn btn-sm ${u.isBanned?'btn-success':'btn-danger'}" onclick="toggleBan('${u.id}')">${u.isBanned?'解封':'封禁'}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+function toggleBan(id) {
+  const u = mockUsers.find(x => x.id === id);
+  if (u) { u.isBanned = !u.isBanned; renderUsers(); showToast(u.isBanned ? '已封禁' : '已解封'); }
+}
+
+// ===== TAGS =====
+function renderTags() {
+  document.getElementById('tagsTableBody').innerHTML = mockTags.map(t => `
+    <tr>
+      <td><b>${t.name}</b></td>
+      <td>${t.type}</td>
+      <td>${t.count}</td>
+      <td>${t.sortOrder}</td>
+      <td>
+        <button class="btn btn-primary btn-sm">编辑</button>
+        <button class="btn btn-danger btn-sm">删除</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ===== UTILS =====
+function formatDate(d) {
+  const date = new Date(d);
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
+}
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;z-index:999;font-size:13px;animation:slideIn 0.3s';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+</script>
+</body>
+</html>

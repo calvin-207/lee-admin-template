@@ -1,0 +1,76 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "探春风",
+        "enablePullDownRefresh": true,
+        "backgroundColor": "#faf8f5"
+      }
+    },
+    {
+      "path": "pages/detail/index",
+      "style": {
+        "navigationBarTitleText": "图片详情",
+        "backgroundColor": "#000000",
+        "navigationBarBackgroundColor": "#000000",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/search/index",
+      "style": {
+        "navigationBarTitleText": "搜索",
+        "backgroundColor": "#faf8f5"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "backgroundColor": "#faf8f5"
+      }
+    },
+    {
+      "path": "pages/upload/index",
+      "style": {
+        "navigationBarTitleText": "上传图片",
+        "backgroundColor": "#faf8f5"
+      }
+    },
+    {
+      "path": "pages/mine/favorites",
+      "style": {
+        "navigationBarTitleText": "我的收藏",
+        "backgroundColor": "#faf8f5"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "探春风",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#faf8f5",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#E07A5F",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "画廊"
+      },
+      {
+        "pagePath": "pages/search/index",
+        "text": "搜索"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  }
+}

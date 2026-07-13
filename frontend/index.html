@@ -9,6 +9,31 @@
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <link rel="icon" href="./favicon.ico">
         <title>lee-admin-template</title>
+        <script>
+        window.__appErrors = [];
+        window.addEventListener('error', function(e) {
+          window.__appErrors.push('ERROR: ' + (e.message || '') + ' @ ' + (e.filename||'') + ':' + (e.lineno||''));
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+          window.__appErrors.push('REJECT: ' + (e.reason && (e.reason.stack || e.reason.message || String(e.reason)) || 'unknown'));
+        });
+        // localStorage/sessionStorage polyfill: 某些内嵌浏览器环境缺失 Web Storage API
+        (function() {
+          function createStorage() {
+            var store = {};
+            return {
+              getItem: function(k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+              setItem: function(k, v) { store[k] = String(v); },
+              removeItem: function(k) { delete store[k]; },
+              clear: function() { store = {}; },
+              key: function(i) { var keys = Object.keys(store); return keys[i] || null; },
+              get length() { return Object.keys(store).length; }
+            };
+          }
+          try { if (typeof window.localStorage === 'undefined' || !window.localStorage) { Object.defineProperty(window, 'localStorage', { value: createStorage(), configurable: true }); } } catch(e) { Object.defineProperty(window, 'localStorage', { value: createStorage(), configurable: true }); }
+          try { if (typeof window.sessionStorage === 'undefined' || !window.sessionStorage) { Object.defineProperty(window, 'sessionStorage', { value: createStorage(), configurable: true }); } } catch(e) { Object.defineProperty(window, 'sessionStorage', { value: createStorage(), configurable: true }); }
+        })();
+        </script>
         <style>
             .app-loading {position: absolute;top:0px;left:0px;right:0px;bottom:0px;display: flex;justify-content: center;align-items: center;flex-direction: column;background:fff;transition: background-color 0.3s ease;}
             .app-loading__logo {margin-bottom: 30px;}

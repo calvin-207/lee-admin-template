@@ -33,6 +33,17 @@ export default defineConfig({
         cors: true,  //跨域设置允许
         strictPort: true, //端口被占用时，是否直接退出
         overlay: false,
+        proxy: {
+            // 将 /api 和 /media 开头的请求代理到后端开发服务器
+            '/api': {
+                target: 'http://127.0.0.1:9999',
+                changeOrigin: true,
+            },
+            '/media': {
+                target: 'http://127.0.0.1:9999',
+                changeOrigin: true,
+            },
+        },
     },
     build: {
         // cssCodeSplit: false,//不分割css

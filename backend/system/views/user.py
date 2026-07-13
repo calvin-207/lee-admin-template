@@ -42,7 +42,7 @@ class UsersManageTimeFilter(django_filters.rest_framework.FilterSet):
     # 模糊搜索
     mobile = django_filters.CharFilter(field_name="mobile", lookup_expr="icontains")
     is_active = django_filters.CharFilter(field_name="is_active")
-    dept_id = django_filters.CharFilter(field_name="dept_id")
+    dept_id = django_filters.CharFilter(field_name="dept__id")
 
     class Meta:
         model = Users
@@ -68,7 +68,7 @@ class UserSerializer(CustomModelSerializer):
 
     def get_deptName(self, obj):
         try:
-            return obj.dept.name
+            return ",".join(obj.dept.values_list("name", flat=True))
         except Exception:
             return ""
 
@@ -230,10 +230,9 @@ class UserViewSet(CustomModelViewSet):
         user = request.user
         if not user.identity in [0, 1]:
             return ErrorResponse(msg="用户类型错误")
-        department = ""
-        dept_id = user.dept_id
-        if dept_id:
-            department = user.dept.name
+        dept_list = list(user.dept.values("id", "name"))
+        dept_id = [d["id"] for d in dept_list] if dept_list else []
+        department = ",".join([d["name"] for d in dept_list]) if dept_list else ""
         result = {
             "id": user.id,
             "avatar": user.avatar,

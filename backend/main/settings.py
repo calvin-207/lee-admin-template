@@ -45,13 +45,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_comment_migrate",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "corsheaders",
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "captcha",
     "system",
-    "apps.leemessages"
+    "apps.leemessages",
+    "apps.leediy"
 ]
 
 MIDDLEWARE = [
@@ -360,14 +362,24 @@ SPECTACULAR_SETTINGS = {
 # ================================================= #
 from datetime import timedelta
 
+# JWT 有效期配置：Access Token 短期有效（降低泄露风险），Refresh Token 长期有效
+# 支持通过环境变量覆盖，单位为分钟
+ACCESS_TOKEN_LIFETIME_MINUTES = locals().get("ACCESS_TOKEN_LIFETIME_MINUTES", 30)
+REFRESH_TOKEN_LIFETIME_DAYS = locals().get("REFRESH_TOKEN_LIFETIME_DAYS", 7)
+
 SIMPLE_JWT = {
-    # token有效时长
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    # token刷新后的有效时间
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    # Access Token 有效时长（默认 30 分钟，短期有效以降低泄露风险）
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+    # Refresh Token 有效时长（默认 7 天，配合短期 Access Token 使用）
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
     # 设置header字段Authorization的值得前缀： JWT accesstoken字符串
     "AUTH_HEADER_TYPES": ("JWT",),
+    # 刷新时签发新的 Refresh Token，形成轮转机制
     "ROTATE_REFRESH_TOKENS": True,
+    # 旧 Refresh Token 使用后将加入黑名单，防止重放攻击
+    "BLACKLIST_AFTER_ROTATION": True,
+    # 用户未激活 / 认证失败时返回 401
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
 # ================================================= #
