@@ -19,73 +19,63 @@ const leeWebSocket = {
   reconnectCurrent: 1,
   reconnectTimer: null,
   reconnectInterval: 5 * 1000,
+  onReceive: null,
+  reconnectEnabled: true,
 
   initWebSocket(revMessage) {
-    let domain = sysConfig.API_HOST;
+    if (typeof revMessage === "function") {
+      this.onReceive = revMessage;
+    }
+    this.reconnectEnabled = true;
+    if (this.websocket && [WebSocket.CONNECTING, WebSocket.OPEN].includes(this.websocket.readyState)) {
+      return this.websocket;
+    }
     if (!("WebSocket" in window)) {
       message.warning("该浏览器不支持WebSocket");
       return null;
     }
-
     const token = getToken();
-    if (!token) {
-      return null;
-    }
+    if (!token) return null;
+    const apiHost = sysConfig.API_HOST;
+    const origin = new URL(
+      apiHost.startsWith("http") ? apiHost : window.location.protocol + "//" + apiHost,
+      window.location.origin
+    );
+    origin.protocol = origin.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = new URL("/ws/msg/", origin).toString();
+    clearTimeout(this.reconnectTimer);
+    const socket = new WebSocket(wsUrl, ["JWTLEEADMIN", getJWTAuthorization()]);
+    this.websocket = socket;
 
-    const wsUrl =
-      (window.location.protocol === "http:" ? "ws://" : "wss://") +
-      `${domain}/ws/msg/`;
-    leeWebSocket.websocket = new WebSocket(wsUrl, [
-      "JWTLEEADMIN",
-      getJWTAuthorization(),
-    ]);
-
-    leeWebSocket.websocket.onmessage = (e) => {
-      if (revMessage) {
-        revMessage(e);
+    socket.onmessage = (event) => this.onReceive?.(event);
+    socket.onopen = () => {
+      this.socketOpen = true;
+      this.reconnectCurrent = 0;
+      useLeewebsocket().setWebSocketState(true);
+      this.startHeartbeat();
+    };
+    socket.onclose = () => {
+      if (this.websocket !== socket) return;
+      clearInterval(this.hearbeatTimer);
+      this.hearbeatTimer = null;
+      this.websocket = null;
+      this.socketOpen = false;
+      useLeewebsocket().setWebSocketState(false);
+      if (this.reconnectEnabled && this.reconnectCurrent < this.reconnectCount) {
+        this.reconnectCurrent++;
+        this.reconnectTimer = setTimeout(() => this.initWebSocket(), this.reconnectInterval);
       }
     };
-
-    leeWebSocket.websocket.onclose = (e) => {
-      leeWebSocket.socketOpen = false;
-      useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
-
-      if (leeWebSocket.isReconnect) {
-        leeWebSocket.reconnectTimer = setTimeout(() => {
-          if (leeWebSocket.reconnectCurrent > leeWebSocket.reconnectCount) {
-            clearTimeout(leeWebSocket.reconnectTimer);
-            leeWebSocket.isReconnect = false;
-            leeWebSocket.socketOpen = false;
-            useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
-            return;
-          }
-
-          leeWebSocket.reconnectCurrent++;
-          leeWebSocket.reconnectWebSocket(revMessage); // 传递 revMessage 参数
-        }, leeWebSocket.reconnectInterval);
-      }
-    };
-
-    leeWebSocket.websocket.onopen = () => {
-      leeWebSocket.socketOpen = true;
-      useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
-      leeWebSocket.isReconnect = true;
-      leeWebSocket.startHeartbeat();
-    };
-
-    leeWebSocket.websocket.onerror = (e) => {};
+    socket.onerror = () => {};
+    return socket;
   },
   startHeartbeat() {
-    if (leeWebSocket.hearbeatTimer) {
-      clearInterval(leeWebSocket.hearbeatTimer);
-    }
-
-    leeWebSocket.hearbeatTimer = setInterval(() => {
-      const data = {
-        time: new Date().getTime(),
-      };
-      leeWebSocket.sendWebSocketMessage(data);
-    }, leeWebSocket.hearbeatInterval);
+    clearInterval(this.hearbeatTimer);
+    this.hearbeatTimer = setInterval(() => {
+      if (this.websocket?.readyState === WebSocket.OPEN) {
+        this.sendWebSocketMessage({ time: Date.now() });
+      }
+    }, this.hearbeatInterval);
   },
   sendWebSocketMessage(data, callback = null) {
     if (
@@ -101,17 +91,21 @@ const leeWebSocket = {
     }
   },
   closeWebSocket() {
-    leeWebSocket.isReconnect = false;
-    leeWebSocket.websocket && leeWebSocket.websocket.close();
-    leeWebSocket.websocket = null;
-    leeWebSocket.socketOpen = false;
-    useLeewebsocket().setWebSocketState(leeWebSocket.socketOpen);
+    this.reconnectEnabled = false;
+    clearTimeout(this.reconnectTimer);
+    clearInterval(this.hearbeatTimer);
+    this.reconnectTimer = null;
+    this.hearbeatTimer = null;
+    const socket = this.websocket;
+    this.websocket = null;
+    socket?.close();
+    this.socketOpen = false;
+    useLeewebsocket().setWebSocketState(false);
   },
   reconnectWebSocket() {
-    if (leeWebSocket.websocket && !leeWebSocket.isReconnect) {
-      leeWebSocket.closeWebSocket();
-    }
-    leeWebSocket.initWebSocket(null);
+    this.closeWebSocket();
+    this.reconnectCurrent = 0;
+    return this.initWebSocket();
   },
 };
 
