@@ -1,5 +1,13 @@
 <template>
     <div class="dashboard-container">
+        <div class="dashboard-heading">
+            <div>
+                <p class="dashboard-eyebrow">WORKSPACE / 工作台</p>
+                <h1>管理概览</h1>
+                <p class="dashboard-subtitle">快捷入口、趋势分析与系统动态集中查看。</p>
+            </div>
+            <el-tag type="info" effect="plain" round>演示数据 · 非实时统计</el-tag>
+        </div>
         <!-- 顶部信息卡片 -->
         <el-row :gutter="15">
             <el-col :xs="24" :sm="12" :md="6">
@@ -124,7 +132,7 @@
 </template>
 
 <script setup>
-    import { ref, onMounted,nextTick,computed } from 'vue'
+    import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from 'vue'
     import * as echarts from 'echarts'
     import {useUserState} from "@/store/userState";
     import { useRouter } from 'vue-router'
@@ -137,7 +145,7 @@
 
     let quickActions = computed(() => {
         let tmparr = []
-        userState.permissions.menus.forEach(item=>{
+        ;(userState.permissions?.menus || []).forEach(item=>{
             if(item.type == 1){
                 tmparr.push({
                     name:item.name,
@@ -164,8 +172,11 @@
     let saleChart = null
 
     const initCharts = () => {
+        const visitElement = document.getElementById('visit-chart')
+        const saleElement = document.getElementById('sale-chart')
+        if (!visitElement || !saleElement) return
         // 访问量图表
-        visitChart = echarts.init(document.getElementById('visit-chart'))
+        visitChart = echarts.init(visitElement)
         visitChart.setOption({
             tooltip: {
                 trigger: 'axis'
@@ -202,7 +213,7 @@
         })
 
         // 销售占比图表
-        saleChart = echarts.init(document.getElementById('sale-chart'))
+        saleChart = echarts.init(saleElement)
         saleChart.setOption({
             tooltip: {
                 trigger: 'item'
@@ -247,35 +258,69 @@
             ]
         })
 
-        // 窗口大小变化时重新调整图表大小
-        window.addEventListener('resize', () => {
-            visitChart && visitChart.resize()
-            saleChart && saleChart.resize()
-        })
     }
 
-    onMounted(() => {
-        setTimeout(() => {
-            nextTick(()=>{
-                initCharts()
-            })
-        },300)
+    const resizeCharts = () => {
+        visitChart?.resize()
+        saleChart?.resize()
+    }
+
+    onMounted(async () => {
+        await nextTick()
+        initCharts()
+        window.addEventListener('resize', resizeCharts)
+    })
+
+    onBeforeUnmount(() => {
+        window.removeEventListener('resize', resizeCharts)
+        visitChart?.dispose()
+        saleChart?.dispose()
+        visitChart = null
+        saleChart = null
     })
     
 </script>
 
 <style scoped>
     .dashboard-container {
-        padding: 10px;
+        padding: var(--lee-space-page, 20px);
+        min-height: 100%;
+    }
+    .dashboard-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .dashboard-heading h1 {
+        color: var(--el-text-color-primary);
+        font-weight: 650;
+        font-size: 26px;
+        letter-spacing: -.5px;
+        line-height: 1.35;
+        margin: 3px 0 6px;
+    }
+    .dashboard-eyebrow {
+        color: var(--el-color-primary);
+        font-size: 11px;
+        letter-spacing: 1.2px;
+        font-weight: 700;
+    }
+    .dashboard-subtitle {
+        color: var(--el-text-color-secondary);
+        font-size: 13px;
+        line-height: 1.6;
     }
 
     /* 信息卡片样式 */
     .info-card {
-        border-radius: 8px;
+        border-radius: var(--lee-radius-md, 12px);
     }
 
     .info-card :deep(.el-card__body) {
-        padding: 15px;
+        padding: 20px;
     }
 
     .card-content {
@@ -284,15 +329,15 @@
     }
 
     .card-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 15px;
         color: white;
-        font-size: 20px;
+        font-size: 21px;
     }
 
     .bg-primary {
@@ -317,19 +362,20 @@
 
     .card-title {
         font-size: 14px;
-        color: #909399;
+        color: var(--el-text-color-secondary);
         margin-bottom: 5px;
     }
 
     .card-value {
-        font-size: 22px;
-        font-weight: bold;
-        color: #303133;
+        font-size: 26px;
+        font-weight: 650;
+        letter-spacing: -.3px;
+        color: var(--el-text-color-primary);
     }
 
     /* 图表卡片样式 */
     .chart-card {
-        border-radius: 8px;
+        border-radius: var(--lee-radius-md, 12px);
     }
 
     .chart-card :deep(.el-card__body) {
@@ -364,7 +410,7 @@
     /* 消息列表样式 */
     .message-item {
         padding: 10px 0;
-        border-bottom: 1px solid #ebeef5;
+        border-bottom: 1px solid var(--el-border-color-light);
     }
 
     .message-item:last-child {
@@ -384,7 +430,7 @@
 
     .message-content {
         font-size: 13px;
-        color: #606266;
+        color: var(--el-text-color-regular);
         line-height: 1.5;
     }
 

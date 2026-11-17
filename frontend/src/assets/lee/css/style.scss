@@ -9,3 +9,5 @@
 @forward 'media.scss';
 @forward 'pages.scss';
 @forward 'dark.scss';
+// Scoped visual refinement layer, loaded after legacy styles.
+@forward 'polish.scss';
