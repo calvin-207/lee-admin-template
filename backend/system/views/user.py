@@ -92,16 +92,19 @@ class UserImportSerializer(CustomModelSerializer):
             UniqueValidator(queryset=Users.objects.all(), message="账号必须唯一")
         ],
     )
-    password = serializers.CharField(required=False, default=make_password("Admin@123456"))
+    password = serializers.CharField(required=False, write_only=True, allow_blank=False)
     nickname = serializers.CharField(required=False, allow_blank=True)
     is_staff = serializers.BooleanField(
         required=False, default=True
     )  # 是否允许登录后台
 
     def create(self, validated_data):
-        if "password" in validated_data.keys():
-            if validated_data["password"]:
-                validated_data["password"] = make_password(validated_data["password"])
+        if "password" in validated_data:
+            validated_data["password"] = make_password(validated_data["password"])
+        else:
+            # Imported/admin users without an explicit password must activate
+            # their account via a separately authorized password-set flow.
+            validated_data["password"] = make_password(None)
         validated_data["identity"] = 1
         validated_data["nickname"] = validated_data["name"]
         return super().create(validated_data)
@@ -124,7 +127,7 @@ class UserCreateSerializer(CustomModelSerializer):
             UniqueValidator(queryset=Users.objects.all(), message="账号必须唯一")
         ],
     )
-    password = serializers.CharField(required=False, default=make_password("Admin@123456"))
+    password = serializers.CharField(required=False, write_only=True, allow_blank=False)
     nickname = serializers.CharField(required=False, allow_blank=True)
     is_staff = serializers.BooleanField(
         required=False, default=True
