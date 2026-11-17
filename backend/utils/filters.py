@@ -105,7 +105,10 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
 
         # 1. 检查模型是否有归属字段
         if not hasattr(queryset.model, "dept_belong"):
-            return queryset
+            # A model without ownership metadata cannot be scoped reliably.
+            # System-wide reference tables must explicitly opt out of this
+            # filter at their ViewSet, rather than silently granting access.
+            return queryset.none()
 
         # 2. 获取用户所有有效角色的数据权限
         roles = user.role.filter(status=True)
@@ -158,7 +161,11 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
                 ).values("data_scope")
                 max_data_scope = self._get_max_data_scope(role_menu_permissions)
             else:
-                max_data_scope = 4  # 菜单数据权限默认【全部数据权限】
+                max_data_scope = -1  # No configured scope: deny, never grant all data
+
+        # Missing/invalid configuration is not an authorization grant.
+        if max_data_scope not in (0, 1, 2, 3, 4):
+            return queryset.none()
 
         # 3.1 最高权限直接返回
         if max_data_scope == 4:  # 全部数据权限
@@ -214,7 +221,7 @@ class DataLevelPermissionsFilter(BaseFilterBackend):
                 ).values_list("dept__id", flat=True)
             dept_ids.update(custom_depts)
 
-        return list(dept_ids) if dept_ids else [user_dept_id]  # 默认至少包含当前部门
+        return list(dept_ids)  # Empty custom scope means no accessible departments
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):
