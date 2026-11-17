@@ -28,6 +28,7 @@ from django.core.validators import URLValidator
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from utils.jsonResponse import SuccessResponse, DetailResponse, ErrorResponse
 from django.db import transaction
 from openpyxl.styles import Alignment, Font, PatternFill
@@ -297,7 +298,20 @@ class ImportExportMixin:
             assert self.export_field_dict, (
                 "'%s' 请配置对应的导出模板字段。" % self.__class__.__name__
             )
-        self.export_field_dict = export_fields
+        if export_fields and not isinstance(export_fields, dict):
+            return ErrorResponse(msg="export_fields必须是字段映射")
+        chosen_fields = export_fields or self.export_field_dict
+        # Export must honor the *same field-level read policy* as the API.
+        # Missing permissions deny export for non-superusers.
+        if not request.user.is_superuser:
+            permissions = self.get_field_permissions(request)
+            forbidden = [
+                name for name in chosen_fields
+                if not permissions.get(str(name).split(".")[0], {}).get("can_view", False)
+            ]
+            if forbidden:
+                raise PermissionDenied("无权导出未授权的字段")
+        self.export_field_dict = chosen_fields
         selected_ids = request.data.get("selected_ids", [])
         queryset = self.get_export_queryset()
         if selected_ids:
@@ -307,7 +321,12 @@ class ImportExportMixin:
         assert self.export_serializer_class, (
             "'%s' 请配置对应的导出序列化器。" % self.__class__.__name__
         )
-        serializer = self.export_serializer_class(queryset, many=True, request=request)
+        serializer = self.apply_field_permissions(
+            self.export_serializer_class,
+            queryset,
+            many=True,
+            context=self.get_serializer_context(),
+        )
         data = serializer.data
 
         if not data:
