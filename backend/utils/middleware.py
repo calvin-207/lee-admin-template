@@ -32,12 +32,10 @@ from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 from django.db import close_old_connections
-from jwt import decode as jwt_decode
 from rest_framework_simplejwt.authentication import AUTH_HEADER_TYPE_BYTES
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser, User
 
 
 class ApiLoggingMiddleware(MiddlewareMixin):
@@ -258,7 +256,7 @@ def get_user(validated_token):
         user = get_user_model().objects.get(id=validated_token["user_id"])
         return user
 
-    except User.DoesNotExist:
+    except get_user_model().DoesNotExist:
         return AnonymousUser()
 
 
@@ -308,72 +306,42 @@ def has_permission(user, path):
 
 
 class JwtAuthMiddleware(BaseMiddleware):
-    def __init__(self, inner):
-        self.inner = inner
+    """Authenticate WebSocket connections with a SimpleJWT access token.
+
+    The frontend transmits tokens using WebSocket subprotocols (browser APIs do
+    not support custom Authorization headers). Only short-lived access tokens
+    are accepted; refresh tokens must never authenticate a socket.
+    """
 
     async def __call__(self, scope, receive, send):
-        # 关闭旧的数据库连接，以防止使用超时的连接
         close_old_connections()
-        # 自定义校验逻辑,获取子协议内容
-        protocol = dict(scope["headers"]).get(b"sec-websocket-protocol", b"")
-        # print(protocol)
-        if len(protocol) == 0:
-            # Empty AUTHORIZATION header sent
-            return None
 
-        alltoken = protocol.split(b", ")
+        async def reject():
+            # An ASGI websocket.close before websocket.accept rejects the handshake.
+            await send({"type": "websocket.close", "code": 4401})
 
-        if not len(alltoken) == 2:
-            return None
+        protocol = dict(scope.get("headers", [])).get(b"sec-websocket-protocol", b"")
+        parts = [part.strip() for part in protocol.split(b",")]
+        if len(parts) != 2 or parts[0] != b"JWTLEEADMIN":
+            return await reject()
 
-        if not alltoken[0] == b"JWTLYADMIN":
-            return None
+        auth_parts = parts[1].split(b"lee", 1)
+        if len(auth_parts) != 2 or auth_parts[0] not in AUTH_HEADER_TYPE_BYTES:
+            return await reject()
 
-        parts = alltoken[1].split(b"lee")
-        if len(parts) == 0:
-            return None
-
-        if parts[0] not in AUTH_HEADER_TYPE_BYTES:
-            # Assume the header does not contain a JSON web token
-            return None
-
-        if len(parts) != 2:
-            return None
-
-        token = parts[1]
-        # Get the token
-        # Try to authenticate the user
         try:
-            # This will automatically validate the token and raise an error if token is invalid
-            UntypedToken(token)
-        except (InvalidToken, TokenError) as e:
-            # Token is invalid
-            # print(e,'InvalidToken,TokenError')
-            return None
-        else:
-            #  Then token is valid, decode it
-            decoded_data = jwt_decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-            # print(decoded_data,'success decode token')
-            # Will return a dictionary like -
-            # {
-            #     "token_type": "access",
-            #     "exp": 1568770772,
-            #     "jti": "5c15e80d65b04c20ad34d77b6703251b",
-            #     "user_id": 6
-            # }
+            validated_token = AccessToken(auth_parts[1].decode("ascii"))
+        except (UnicodeDecodeError, InvalidToken, TokenError, ValueError):
+            return await reject()
 
-            # Get the user using ID
-            scope["user"] = await get_user(validated_token=decoded_data)
-            user = scope["user"]
-            if isinstance(user, AnonymousUser):
-                return None
-            if not user.is_active:
-                return None
-            path = scope["path"]
-            haspermission = await has_permission(user, path)
-            if not haspermission:
-                return None
+        user = await get_user(validated_token=validated_token)
+        if not user or not user.is_active or isinstance(user, AnonymousUser):
+            return await reject()
 
+        if not await has_permission(user, scope.get("path", "")):
+            return await reject()
+
+        scope["user"] = user
         return await super().__call__(scope, receive, send)
 
 
