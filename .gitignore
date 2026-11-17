@@ -54,6 +54,11 @@ pip-wheel-metadata/
 */migrations/__pycache__/
 */migrations/*.py[cod]
 
+# Redis 持久化快照（运行时数据）
+*.rdb
+appendonly.aof
+appendonlydir/
+
 # Django 运行时文件
 *.sqlite3
 db.sqlite3
