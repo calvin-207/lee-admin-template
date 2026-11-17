@@ -134,9 +134,10 @@ class UserCreateSerializer(CustomModelSerializer):
     )  # 是否允许登录后台
 
     def create(self, validated_data):
-        if "password" in validated_data.keys():
-            if validated_data["password"]:
-                validated_data["password"] = make_password(validated_data["password"])
+        if "password" in validated_data:
+            validated_data["password"] = make_password(validated_data["password"])
+        else:
+            validated_data["password"] = make_password(None)
         validated_data["identity"] = 1
         validated_data["nickname"] = validated_data["name"]
         return super().create(validated_data)
