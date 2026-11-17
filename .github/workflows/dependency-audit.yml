@@ -1,0 +1,92 @@
+name: Dependency security audit
+
+on:
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit
+  cancel-in-progress: false
+
+jobs:
+  python-audit:
+    name: Python / pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install audit tool
+        run: python -m pip install pip-audit
+      - name: Scan Python requirements
+        id: scan
+        shell: bash
+        run: |
+          mkdir -p reports
+          set +e
+          pip-audit -r backend/requirements.txt --format=json --output=reports/python-audit.json
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::Python dependencies need security review (pip-audit exit $status)."
+            echo "Python audit flagged vulnerabilities or scanner errors; inspect the report." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Python dependency audit: no known vulnerabilities found." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+      - name: Upload Python audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-audit-report
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  npm-audit:
+    name: npm / security audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Resolve frontend dependencies
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Scan frontend dependencies
+        shell: bash
+        run: |
+          mkdir -p reports
+          set +e
+          npm audit --json --audit-level=high > reports/npm-audit.json
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::npm audit reported high-severity vulnerabilities or scanning errors."
+            echo "Frontend dependency audit needs review (exit $status)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Frontend dependency audit: no high-severity findings." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: frontend/reports/
+          if-no-files-found: warn
+          retention-days: 14
