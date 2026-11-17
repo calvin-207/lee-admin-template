@@ -1,0 +1,147 @@
+/*
+ * Lee Admin visual refinement layer (2026).
+ * These semantic tokens intentionally use Element Plus variables so the
+ * existing user-selected primary colour and dark mode keep working.
+ */
+:root {
+  --lee-radius-sm: 8px;
+  --lee-radius-md: 12px;
+  --lee-radius-lg: 16px;
+  --lee-space-page: 20px;
+  --lee-surface: var(--el-bg-color-overlay, #fff);
+  --lee-surface-muted: var(--el-fill-color-light, #f5f7fa);
+  --lee-border: var(--el-border-color-light, #e4e7ed);
+  --lee-text: var(--el-text-color-primary, #303133);
+  --lee-muted: var(--el-text-color-secondary, #909399);
+  --lee-shadow: 0 4px 20px rgba(18, 40, 76, .045);
+}
+
+/* Use 14px as the UI baseline, without overriding component density controls. */
+html,
+body,
+#app {
+  font-size: 14px;
+  color: var(--lee-text);
+  background: var(--el-bg-color-page, #f7f8fb);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Restore visible keyboard focus. The legacy app.scss disables outlines. */
+:where(a, button, input, textarea, select, [role="button"], [tabindex]):focus-visible,
+.el-button:focus-visible,
+.el-input__wrapper:focus-within {
+  outline: 2px solid var(--el-color-primary) !important;
+  outline-offset: 2px;
+}
+.el-input__wrapper:focus-within {
+  outline-offset: 1px;
+}
+:where(a, button, [role="button"]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+.lee-panel-header {
+  min-height: 56px;
+  height: 56px;
+  border-bottom: 1px solid rgba(255, 255, 255, .09);
+}
+.lee-panel-header .logo-bar {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.2px;
+  min-width: 0;
+}
+.lee-panel-header .logo-bar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lee-panel-side {
+  border-right: 1px solid var(--lee-border);
+  box-shadow: none;
+}
+.lee-panel-side .el-menu-item,
+.lee-panel-side .el-sub-menu__title {
+  border-radius: var(--lee-radius-sm);
+  margin: 3px 9px;
+  transition: background-color .18s ease, color .18s ease;
+}
+.lee-panel-side:not(.isCollapse) .el-menu-item,
+.lee-panel-side:not(.isCollapse) .el-sub-menu__title {
+  padding-right: 12px;
+}
+.lee-panel-side-bottom {
+  min-height: 48px;
+  transition: background-color .18s ease;
+}
+.lee-panel-side-bottom:hover {
+  background: rgba(128, 146, 170, .1);
+}
+.lee-panel-main {
+  background: var(--el-bg-color-page, #f7f8fb);
+}
+
+/* Surfaces, controls and typography across list/detail pages. */
+.lee-panel-main .el-card {
+  border-color: var(--lee-border);
+  border-radius: var(--lee-radius-md);
+  box-shadow: var(--lee-shadow);
+}
+.lee-panel-main .el-card__header {
+  padding: 18px 20px 12px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.lee-panel-main .el-card__body {
+  color: var(--lee-text);
+}
+.lee-panel-main .el-button {
+  border-radius: var(--lee-radius-sm);
+  font-weight: 500;
+}
+.lee-panel-main .el-input__wrapper,
+.lee-panel-main .el-select__wrapper,
+.lee-panel-main .el-textarea__inner {
+  border-radius: var(--lee-radius-sm);
+}
+.lee-panel-main .el-table {
+  --el-table-header-bg-color: var(--el-fill-color-light);
+  --el-table-row-hover-bg-color: var(--el-fill-color-lighter);
+  border-radius: var(--lee-radius-sm);
+}
+.lee-panel-main .el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+}
+.lee-panel-main .el-table .cell {
+  line-height: 1.55;
+}
+.lee-panel-main .el-pagination {
+  --el-pagination-button-bg-color: transparent;
+}
+
+/* A single set of surface treatments works in both light and dark schemes. */
+html.dark {
+  --lee-shadow: 0 4px 18px rgba(0, 0, 0, .12);
+}
+html.dark .lee-panel-header {
+  border-bottom-color: var(--el-border-color-light);
+}
+html.dark .lee-panel-main .el-card {
+  background: var(--el-bg-color-overlay);
+}
+
+@media (max-width: 992px) {
+  :root { --lee-space-page: 12px; }
+  .lee-panel-header { height: 52px; min-height: 52px; }
+  .lee-panel-header-left { padding-left: 12px; }
+  .lee-panel-main .el-card__header { padding: 14px 16px 10px; }
+  .lee-panel-main .el-card__body { overflow-wrap: anywhere; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lee-panel-side .el-menu-item,
+  .lee-panel-side .el-sub-menu__title,
+  .lee-panel-side-bottom { transition: none; }
+}
