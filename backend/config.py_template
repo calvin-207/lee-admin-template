@@ -28,13 +28,16 @@ REDIS_URL = f"redis://:{REDIS_PASSWORD or ''}@{REDIS_HOST}:{REDIS_PORT}"
 # ************** service base config ************** #
 # ================================================= #
 
+# Production: configure a unique SECRET_KEY in this file (or DJANGO_SECRET_KEY environment variable).
+# Django Channels uses Redis by default; set USE_INMEMORY_CHANNEL_LAYER=1 for single-process local debugging.
+
 # global log config
 API_LOG_ENABLE = True
 API_LOG_METHODS = ["POST", "UPDATE", "DELETE", "PUT"]  # ['POST', 'DELETE']
 
 IS_DEMO = False  # is demo（demo only support scree ）
-DEBUG = True  # 是否调试模式
-ALLOWED_HOSTS = ["*"]
+DEBUG = True  # 本地开发专用；生产必须设为 False 并设置 SECRET_KEY
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 IS_SINGLE_TOKEN = False  # 是否只允许单用户单一地点登录(只有一个人在线上)(默认多地点登录),只针对后台用户生效
 
 ALLOW_FRONTEND = True  # 是否关闭前端API访问
