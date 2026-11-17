@@ -1,4 +1,9 @@
 import os
+
+# 唯一的后端配置模板：复制为 config.py 后修改。
+# 当前 settings.py 使用 `from config import *`，不会自动读取 .env 文件。
+# 生产环境请设置 DEBUG=False，配置独立的 SECRET_KEY 与 ALLOWED_HOSTS。
+# 推荐通过 DJANGO_SECRET_KEY 环境变量注入密钥，不要提交任何真实密钥。
 # ================================================= #
 # ***************** 数据库 配置  *************** #
 # ================================================= #
@@ -28,7 +33,8 @@ REDIS_URL = f"redis://:{REDIS_PASSWORD or ''}@{REDIS_HOST}:{REDIS_PORT}"
 # ************** service base config ************** #
 # ================================================= #
 
-# Production: configure a unique SECRET_KEY in this file (or DJANGO_SECRET_KEY environment variable).
+# Production: configure a unique SECRET_KEY via DJANGO_SECRET_KEY environment variable.
+# Example: export DJANGO_SECRET_KEY="<unique-secret>" before starting Django.
 # Django Channels uses Redis by default; set USE_INMEMORY_CHANNEL_LAYER=1 for single-process local debugging.
 
 # global log config
