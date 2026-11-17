@@ -22,10 +22,16 @@ sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = locals().get("SECRET_KEY", "django-insecure-default-key-change-me")
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = locals().get("DEBUG", False)
+
+# A fixed fallback secret makes all deployed installations forgeable.
+# Production deployments must inject a unique value via config.py.
+SECRET_KEY = locals().get("SECRET_KEY") or os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-local-development-only"
+    else:
+        raise RuntimeError("SECRET_KEY (or DJANGO_SECRET_KEY) must be configured in production")
 
 ALLOWED_HOSTS = locals().get("ALLOWED_HOSTS", [])
 
@@ -167,10 +173,17 @@ CACHES = {
     },
 }
 
+# In-memory channels only work within a single process. Production and
+# multi-worker development use Redis for reliable cross-process distribution.
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"  # 默认用内存
-    },
+    "default": (
+        {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+        if DEBUG and os.environ.get("USE_INMEMORY_CHANNEL_LAYER") == "1"
+        else {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [REDIS_URL]},
+        }
+    )
 }
 
 # Password validation
@@ -280,14 +293,14 @@ CORS_EXPOSE_HEADERS = [
 # ================================================= #
 if not DEBUG:
     # 生产环境安全配置
-    SECURE_SSL_REDIRECT = False  # 如果使用 HTTPS，设置为 True
-    SECURE_HSTS_SECONDS = 31536000  # HSTS 一年
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "false").lower() == "true"  # Set true behind correctly configured HTTPS ingress
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "0"))  # Enable only after HTTPS verification
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SECURE_HSTS_PRELOAD = False
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
-    SESSION_COOKIE_SECURE = False  # 如果使用 HTTPS，设置为 True
-    CSRF_COOKIE_SECURE = False  # 如果使用 HTTPS，设置为 True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_HTTPONLY = True
     SESSION_COOKIE_HTTPONLY = True
 
