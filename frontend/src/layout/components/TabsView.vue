@@ -5,6 +5,11 @@
             <el-scrollbar class="tabscrollbar">
                 <div class="tabs-list">
                     <div v-for="tab in tabsList" :key="tab.path" class="tabs-item" :class="{ 'is-active': tab.path === activeTab }"
+                    role="button"
+                    tabindex="0"
+                    :aria-current="tab.path === activeTab ? 'page' : undefined"
+                    @keydown.enter.prevent="tabClick(tab)"
+                    @keydown.space.prevent="tabClick(tab)"
                     @click="tabClick(tab)"
                     @contextmenu.prevent="openContextMenu($event, tab)"
                     >
@@ -79,7 +84,7 @@
 </template>
 
 <script setup>
-    import { ref, computed, watch, onMounted } from 'vue'
+    import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
     import { useRouter, useRoute } from 'vue-router'
     import { useSiteThemeStore } from '@/store/siteTheme'
     import { useTabsStore } from '@/store/tabs'
@@ -186,6 +191,9 @@
     onMounted(() => {
         document.addEventListener('click', handleClickOutside)
     })
+    onBeforeUnmount(() => {
+        document.removeEventListener('click', handleClickOutside)
+    })
 
     // 监听路由变化
     watch(
@@ -205,9 +213,9 @@
 
 <style scoped>
     .tabs-view-container {
-        height: 28px;
-        background-color: var(--el-bg-color);
-        box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+        height: 38px;
+        background-color: var(--el-bg-color-overlay);
+        box-shadow: none;
     }
 
     /* 桌面端标签样式 */
@@ -230,7 +238,8 @@
     .tabs-list {
         display: flex;
         height: 100%;
-        padding: 0 10px;
+        padding: 3px 10px;
+        gap: 4px;
     }
 
     .tabs-item {
@@ -238,8 +247,9 @@
         display: flex;
         align-items: center;
         height: 100%;
-        padding: 0 12px;
-        margin-right: 5px;
+        padding: 0 13px;
+        margin-right: 4px;
+        border-radius: 8px 8px 0 0;
         font-size: 13px;
         cursor: pointer;
         color: var(--el-text-color-regular);
@@ -248,7 +258,7 @@
         border:none;
         border-bottom: none;
         /* border-radius: 4px 4px 0 0; */
-        transition: all 0.3s;
+        transition: background-color .18s ease, color .18s ease;
         flex-shrink: 0;
     }
 
@@ -259,7 +269,8 @@
 
     .tabs-item.is-active {
         color: var(--el-color-primary);
-        background-color: var(--el-bg-color);
+        background-color: var(--el-color-primary-light-9);
+        font-weight: 600;
         /* border-color: var(--el-border-color-light);
         border-bottom-color: transparent; */
         
@@ -387,7 +398,7 @@
     /* 响应式调整 */
     @media screen and (max-width: 768px) {
         .tabs-view-container {
-            height: 28px;
+            height: 38px;
         }
         
         .mobile-tabs-current {
