@@ -10,6 +10,7 @@ from django.db import transaction
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIRequestFactory
 from rest_framework.request import Request
+from rest_framework.parsers import JSONParser
 
 from system.models import Users
 from system.views.user import UserCreateSerializer, UserImportSerializer
@@ -28,7 +29,7 @@ def test_bulk_delete_refuses_mixed_authorized_and_unauthorized_ids():
         "/api/users/multiple_delete/",
         {"keys": [owned.pk, foreign.pk]},
         format="json",
-    ))
+    ), parsers=[JSONParser()])
     with pytest.raises(PermissionDenied):
         view.multiple_delete(request)
     assert Users.objects.filter(pk=owned.pk).exists()
@@ -44,7 +45,7 @@ def test_bulk_delete_allows_only_fully_scoped_ids():
     view.filter_queryset = lambda qs: qs.filter(pk=owned.pk)
     request = Request(APIRequestFactory().delete(
         "/api/users/multiple_delete/", {"keys": [owned.pk]}, format="json"
-    ))
+    ), parsers=[JSONParser()])
     view.multiple_delete(request)
     assert not Users.objects.filter(pk=owned.pk).exists()
     assert Users.objects.filter(pk=foreign.pk).exists()
@@ -56,7 +57,7 @@ def test_bulk_delete_rejects_invalid_id_lists(ids):
     view.get_queryset = Mock(side_effect=AssertionError("Must not query for invalid keys"))
     request = Request(APIRequestFactory().delete(
         "/api/users/multiple_delete/", {"keys": ids}, format="json"
-    ))
+    ), parsers=[JSONParser()])
     response = view.multiple_delete(request)
     assert response.data["code"] != 2000
 
