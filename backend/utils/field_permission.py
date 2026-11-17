@@ -85,7 +85,23 @@ class FieldPermissionMixin:
         ).values(
             "can_create", "can_view", "can_update", field_name=F("field__field_name")
         )
-        return self.merge_permissions(list(queryset))
+        # Registered fields default to denied unless the user's roles grant
+        # them. Previously, a model with zero role grants returned {}, and
+        # apply_field_permissions() treated {} as "no restrictions".
+        configured_fields = MenuField.objects.filter(model=model_name).values_list(
+            "field_name", flat=True
+        )
+        merged = self.merge_permissions(list(queryset))
+        result = {
+            field_name: {
+                "can_create": False,
+                "can_view": False,
+                "can_update": False,
+            }
+            for field_name in configured_fields
+        }
+        result.update(merged)
+        return result
 
     @staticmethod
     def merge_permissions(data):
