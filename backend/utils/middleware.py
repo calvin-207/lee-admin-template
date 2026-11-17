@@ -64,17 +64,26 @@ class ApiLoggingMiddleware(MiddlewareMixin):
         request.request_data = get_request_data(request)
         request.request_path = get_request_path(request)
 
-    def _mask_sensitive_data(self, data: dict) -> dict:
-        """掩码敏感数据"""
-        sensitive_fields = [
-            "password",
-            "currentPassword",
-            "newPassword",
-            "confirmPassword",
-        ]
-        for field in sensitive_fields:
-            if field in data and data[field]:
-                data[field] = "*" * len(data[field])
+    def _mask_sensitive_data(self, data):
+        """Redact secrets recursively, without mutating the original request.
+
+        Login responses contain access and refresh JWTs; raw operation logs
+        must never store these credentials.
+        """
+        secret_names = {
+            "password", "currentpassword", "newpassword", "confirmpassword",
+            "oldpassword", "access", "refresh", "token", "authorization",
+            "api_key", "apikey", "secret", "secret_key", "captcha",
+            "captchakey", "private_key", "client_secret",
+        }
+        if isinstance(data, dict):
+            return {
+                key: "***" if str(key).replace("-", "_").lower() in secret_names
+                else self._mask_sensitive_data(value)
+                for key, value in data.items()
+            }
+        if isinstance(data, (list, tuple)):
+            return [self._mask_sensitive_data(value) for value in data]
         return data
 
     def _get_response_data(self, response):
@@ -120,7 +129,7 @@ class ApiLoggingMiddleware(MiddlewareMixin):
             ],
             "json_result": {
                 "code": response_data.get("code"),
-                "data": response_data.get("data"),
+                "data": self._mask_sensitive_data(response_data.get("data")),
                 "msg": response_data.get("msg"),
             },
         }
