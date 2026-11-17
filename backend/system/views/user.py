@@ -111,7 +111,7 @@ class UserImportSerializer(CustomModelSerializer):
 
     class Meta:
         model = Users
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "is_superuser", "identity"]
         fields = "__all__"
         extra_kwargs = {"role": {"required": False, "allow_empty": True}}
 
@@ -149,7 +149,7 @@ class UserCreateSerializer(CustomModelSerializer):
     class Meta:
         model = Users
         fields = "__all__"
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "is_superuser", "identity"]
 
 
 class UserUpdateSerializer(CustomModelSerializer):
@@ -179,7 +179,7 @@ class UserUpdateSerializer(CustomModelSerializer):
 
     class Meta:
         model = Users
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "is_superuser", "identity"]
         fields = "__all__"
         extra_kwargs = {"nickname": {"required": False}}
 
