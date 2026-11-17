@@ -44,7 +44,13 @@ CI 可在 Actions 页面看到每次执行的状态，下载 `backend-test-repor
 - 目前未启用自动生产部署；建议先建立 Docker Compose 测试环境，发布需人工批准。
 - `CODEOWNERS`、依赖许可证合规、Secret scanning / CodeQL 可作为下一阶段扩展。
 
-## 5. 常用命令
+## 5. 后端配置入口
+
+后端统一使用 `backend/config.py_template`：先复制为 `backend/config.py`，再配置数据库、Redis、DEBUG 与 ALLOWED_HOSTS。`main/settings.py` 直接导入 `config.py`，不会自动解析 `.env`；原 `.env.example` 已移除，避免误以为两套配置同时生效。
+
+生产环境建议在启动进程时提供 `DJANGO_SECRET_KEY`，并将 `DEBUG` 设为 `False`。不要将生成的 `config.py` 提交到 Git 仓库。
+
+## 6. 常用命令
 
 ```bash
 cd backend
