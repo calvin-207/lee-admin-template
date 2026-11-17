@@ -12,6 +12,8 @@ from utils.permission import CustomPermission
 from django.http import Http404
 from django.shortcuts import get_object_or_404 as _get_object_or_404
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from rest_framework.exceptions import PermissionDenied
 from utils.exception import APIException
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import utils
@@ -193,9 +195,22 @@ class CustomModelViewSet(ModelViewSet,FieldPermissionMixin,ImportExportMixin):
     def multiple_delete(self, request, *args, **kwargs):
         request_data = request.data
         keys = request_data.get('keys', None)
-        if keys:
-            self.get_queryset().filter(id__in=keys).delete()
-            return SuccessResponse(data=[], msg="删除成功")
-        else:
-            return ErrorResponse(msg="未获取到keys字段")
+        if not isinstance(keys, (list, tuple)) or not keys:
+            return ErrorResponse(msg="keys必须是非空ID数组")
+        if len(keys) > 100:
+            return ErrorResponse(msg="单次最多删除100条记录")
+
+        # Never use the unfiltered queryset for destructive operations.
+        # Validate *all* IDs before deletion, so a mixed authorized/unauthorized
+        # batch cannot be partially executed or reveal out-of-scope records.
+        with transaction.atomic():
+            scoped_queryset = self.filter_queryset(self.get_queryset())
+            target_ids = {str(key) for key in keys}
+            if len(target_ids) != len(keys):
+                return ErrorResponse(msg="keys中存在重复ID")
+            objects = list(scoped_queryset.filter(pk__in=keys))
+            if {str(obj.pk) for obj in objects} != target_ids:
+                raise PermissionDenied("部分记录不存在或无删除权限")
+            scoped_queryset.filter(pk__in=keys).delete()
+        return SuccessResponse(data=[], msg="删除成功")
 
