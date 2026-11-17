@@ -40,3 +40,22 @@ def test_export_fails_closed_for_unconfigured_field_permissions(normal_user):
     with pytest.raises(PermissionDenied):
         view.export_data(request)
     view.get_export_queryset.assert_not_called()
+
+
+def test_registered_field_defaults_to_denied_without_role_grant():
+    from unittest.mock import patch
+    from utils.field_permission import FieldPermissionMixin
+
+    with (
+        patch("utils.field_permission.MenuField.objects.filter") as fields,
+        patch("utils.field_permission.FieldPermission.objects.filter") as grants,
+    ):
+        fields.return_value.values_list.return_value = ["mobile", "email"]
+        grants.return_value.values.return_value = [
+            {"field_name": "email", "can_view": True, "can_create": False, "can_update": False}
+        ]
+        result = FieldPermissionMixin().query_database_permissions("Users", (1,))
+    assert result["mobile"] == {
+        "can_view": False, "can_create": False, "can_update": False
+    }
+    assert result["email"]["can_view"] is True
