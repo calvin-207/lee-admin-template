@@ -26,106 +26,70 @@ request.interceptors.request.use((config) => {
   return config;
 });
 
-// Token 刷新锁：防止多个 401 响应并发触发多次刷新
-let isRefreshing = false;
-let refreshSubscribers = [];
-
-function onTokenRefreshed(newToken) {
-  refreshSubscribers.forEach((cb) => cb(newToken));
-  refreshSubscribers = [];
-}
-
-function addRefreshSubscriber(callback) {
-  refreshSubscribers.push(callback);
-}
+// Single-flight refresh. Every waiting request receives the same resolution
+// or rejection; a failed refresh must never leave a Promise pending forever.
+let refreshPromise = null;
 
 function handleLogout() {
   autoStorage.clear();
-  ElMessage.success("已退出登录!");
+  ElMessage.error("登录信息失效，请重新登录");
   window.location.href = "/";
 }
 
-// http response 拦截器
+function refreshAccessToken() {
+  if (!refreshPromise) {
+    const refreshToken = getRereshToken();
+    if (!refreshToken) return Promise.reject(new Error("No refresh token"));
+    refreshPromise = axios
+      .post(API_BASE_URL + "/api/token/refresh/", { refresh: refreshToken })
+      .then(({ data }) => {
+        const payload = data?.data?.access ? data.data : data;
+        if (!payload?.access || !payload?.refresh) {
+          throw new Error("Token refresh response is invalid");
+        }
+        setToken("logintoken", payload.access);
+        setRefreshToken("refreshtoken", payload.refresh);
+        return payload.access;
+      })
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
 request.interceptors.response.use(
   async (response) => {
-    if (response.data.code === 4001 || response.data.code === 401) {
-      const refreshToken = getRereshToken();
-
-      if (!isRefreshing) {
-        isRefreshing = true;
-        try {
-          const refreshResponse = await axios.post(
-            API_BASE_URL + "/api/token/refresh/",
-            { refresh: refreshToken },
-          );
-          if (
-            refreshResponse.data.hasOwnProperty("code") &&
-            refreshResponse.data.code === 4001
-          ) {
-            ElMessageBox.alert("登录信息失效,请重新登录！", "登录失效", {
-              confirmButtonText: "确定",
-              type: "warning",
-              callback: () => handleLogout(),
-            });
-            return response;
-          }
-          // 刷新成功，存储新 token
-          setToken("logintoken", refreshResponse.data.access);
-          setRefreshToken("refreshtoken", refreshResponse.data.refresh);
-          // 通知所有等待中的请求使用新 token 重试
-          onTokenRefreshed(refreshResponse.data.access);
-          // 用新 token 重发当前请求
-          response.config.headers.Authorization = sysConfig.TOKEN_PREFIX + refreshResponse.data.access;
-          const retryResponse = await request(response.config);
-          return retryResponse;
-        } catch (refreshError) {
-          console.error("Failed to refresh access token:", refreshError);
-          refreshSubscribers = [];
-          ElMessageBox.alert("登录信息失效,请重新登录！", "登录失效", {
-            confirmButtonText: "确定",
-            type: "warning",
-            callback: () => handleLogout(),
-          });
-          return response;
-        } finally {
-          isRefreshing = false;
-        }
-      }
-
-      // 如果正在刷新中，将当前请求加入等待队列
-      return new Promise((resolve) => {
-        addRefreshSubscriber((newToken) => {
-          response.config.headers.Authorization = sysConfig.TOKEN_PREFIX + newToken;
-          resolve(request(response.config));
-        });
-      });
-    } else {
+    if (response.data?.code !== 4001 && response.data?.code !== 401) {
       return response;
+    }
+    const original = response.config;
+    if (original._authRetried) {
+      handleLogout();
+      throw new Error("Authentication expired after retry");
+    }
+    original._authRetried = true;
+    try {
+      const accessToken = await refreshAccessToken();
+      original.headers.Authorization = sysConfig.TOKEN_PREFIX + accessToken;
+      return request(original);
+    } catch (error) {
+      handleLogout();
+      return Promise.reject(error);
     }
   },
   (error) => {
-    if (error.response && error.response.status == 404) {
-      if (import.meta.env.PROD) {
-        window.location.href = "/404";
-        return;
-      }
-    } else if (error.message == "canceled") {
-      return new Promise(() => {});
-    } else if (error.message.indexOf("timeout") != -1) {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+    if (error.response?.status === 404 && import.meta.env.PROD) {
+      window.location.href = "/404";
+    } else if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
       ElMessage.error("网络超时");
-    } else if (error.message == "Network Error") {
-      if (error.config.data == '{"action":"restart","type":"panel"}') {
-        return new Promise(() => {});
-      } else if (error.config.data == '{"action":"restart","type":"server"}') {
-        return new Promise(() => {});
-      }
+    } else if (error.message === "Network Error") {
       ElMessage.error("网络连接错误");
+    } else if (error.response) {
+      ElMessage.error(error.response.statusText || "请求失败");
     } else {
-      if (error.response && error.response.data) {
-        ElMessage.error(error.response.statusText);
-      } else {
-        ElMessage.error("接口路径找不到");
-      }
+      ElMessage.error("网络请求失败");
     }
     return Promise.reject(error);
   },
@@ -237,12 +201,8 @@ function ajax(opt, method) {
     config3.data = params;
     return new Promise((resolve, reject) => {
       request(config3)
-        .then((res) => {
-          resolve(res);
-        })
-        .catch((res) => {
-          resolve(res);
-        });
+        .then(resolve)
+        .catch(reject);
     });
   } else {
     var config1 = {
