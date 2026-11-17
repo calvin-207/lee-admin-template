@@ -40,7 +40,7 @@ class APIPermissionValidator:
             return False
 
         # 将{id}等路径参数转换为正则表达式
-        pattern = permission_api.replace("{id}", r".*?").replace("/", r"\/")
+        pattern = re.escape(permission_api).replace(r"\{id\}", r"[A-Za-z0-9_-]+")
         return bool(re.fullmatch(pattern, request_path))
 
     @classmethod
@@ -194,7 +194,7 @@ class CustomPermission(BasePermission):
 
     def _get_db_whitelist(self):
         """从数据库获取白名单列表（带缓存）"""
-        whitelist = []
+        whitelist = None
         if CUSTOM_PERMISSION_CAHCE:
             cache_key = "api_whitelist_cache"
             whitelist = cache.get(cache_key)
@@ -206,7 +206,11 @@ class CustomPermission(BasePermission):
             else:
                 wlist = self.safe_parse_json(ins.value)
             if wlist:
-                whitelist = [(item.api, item.method) for item in wlist]
+                whitelist = [
+                    (item.get("api"), item.get("method"))
+                    for item in wlist
+                    if isinstance(item, dict) and item.get("api") and item.get("method")
+                ]
                 if CUSTOM_PERMISSION_CAHCE:
                     cache.set(
                         cache_key, whitelist, timeout=CUSTOM_PERMISSION_CAHCE_TIME
@@ -278,7 +282,7 @@ class CustomPermission(BasePermission):
         返回:
             bool: 是否匹配成功
         """
-        pattern = pattern_path.replace("{id}", r"([a-zA-Z0-9-]+)").replace("/", r"\/")
+        pattern = re.escape(pattern_path).replace(r"\{id\}", r"[A-Za-z0-9_-]+")
         if re.fullmatch(pattern, request_path):
             return True
         return False
