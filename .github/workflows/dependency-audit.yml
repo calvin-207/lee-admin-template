@@ -44,7 +44,7 @@ jobs:
           echo "exit_code=$status" >> "$GITHUB_OUTPUT"
       - name: Upload Python audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-audit-report
           path: reports/
@@ -84,7 +84,7 @@ jobs:
           fi
       - name: Upload npm audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-audit-report
           path: frontend/reports/
