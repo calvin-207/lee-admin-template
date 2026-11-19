@@ -1,11 +1,11 @@
 <template>
 	<el-form ref="loginFormRef" :model="formData" :rules="rules" label-width="0" size="large" @keyup.enter="submitLogin" :disabled="islogining">
 		<el-form-item prop="username">
-			<el-input v-model="formData.username" prefix-icon="user" clearable placeholder="请输入用户名">
+			<el-input v-model="formData.username" name="username" autocomplete="username" prefix-icon="user" clearable placeholder="请输入用户名">
 			</el-input>
 		</el-form-item>
 		<el-form-item prop="password">
-			<el-input v-model="formData.password" prefix-icon="lock" clearable show-password placeholder="请输入密码"></el-input>
+			<el-input v-model="formData.password" type="password" name="password" :autocomplete="rememberCredentials ? 'current-password' : 'off'" prefix-icon="lock" clearable show-password placeholder="请输入密码"></el-input>
 		</el-form-item>
 		<el-form-item prop="captcha" v-if="userState.sysConfig.loginCaptcha">
             <el-input type="text" prefix-icon="circle-check" v-model.trim="formData.captcha" auto-complete="off" placeholder="验证码" :rules="userState.sysConfig.loginCaptcha?captchaRules:[]">
@@ -14,6 +14,10 @@
                   </template>
             </el-input>
           </el-form-item>
+		<el-form-item class="remember-row">
+			<el-checkbox v-model="rememberCredentials">记住账号、密码</el-checkbox>
+			<span class="remember-hint">密码由浏览器安全保存</span>
+		</el-form-item>
 		<el-form-item>
 			<el-button type="primary" class="login-btn" style="width: 100%;" :loading="islogining" round @click="submitLogin">登录</el-button>
 		</el-form-item>
@@ -49,6 +53,52 @@
 		captcha: "",
 		captchaKey: null,
 	})
+	// 只在本地保存用户名及用户的选择，不保存明文密码或可逆加密密码。
+	const REMEMBER_LOGIN_KEY = 'lee-admin:remember-login'
+	const REMEMBER_USERNAME_KEY = 'lee-admin:remember-username'
+	const rememberCredentials = ref(false)
+
+	function loadRememberedLogin() {
+		try {
+			rememberCredentials.value = localStorage.getItem(REMEMBER_LOGIN_KEY) === 'true'
+			if (rememberCredentials.value) {
+				formData.value.username = localStorage.getItem(REMEMBER_USERNAME_KEY) || ''
+			}
+		} catch (_) {
+			// 禁止本地存储的浏览器中仍可正常登录。
+		}
+	}
+
+	function persistRememberedLogin() {
+		try {
+			if (rememberCredentials.value) {
+				localStorage.setItem(REMEMBER_LOGIN_KEY, 'true')
+				localStorage.setItem(REMEMBER_USERNAME_KEY, formData.value.username)
+			} else {
+				localStorage.removeItem(REMEMBER_LOGIN_KEY)
+				localStorage.removeItem(REMEMBER_USERNAME_KEY)
+			}
+		} catch (_) {
+			// 存储失败不影响登录。
+		}
+	}
+
+	function requestBrowserPasswordSave() {
+		if (!rememberCredentials.value || !window.isSecureContext ||
+			!('PasswordCredential' in window) || !navigator.credentials?.store) return
+		try {
+			const credential = new window.PasswordCredential({
+				id: formData.value.username,
+				password: formData.value.password,
+				name: formData.value.username,
+			})
+			// 浏览器可能拒绝保存或不支持此 API；不阻断登录。
+			Promise.resolve(navigator.credentials.store(credential)).catch(() => {})
+		} catch (_) {
+			// 其他浏览器依靠 autocomplete 提示其内置密码管理器。
+		}
+	}
+
 	let image_base = ref(null)
 	let captchaRules = [
 		{required: true, message: "请输入验证码", trigger: 'blur'}
@@ -98,6 +148,8 @@
 				// 3. 登录成功处理
 				setToken('logintoken', res.data.access);
 				setRefreshToken('refreshtoken', res.data.refresh);
+				persistRememberedLogin();
+				requestBrowserPasswordSave();
 				await userState.getSystemWebRouter(router)
 				loginSuccess(); // 执行跳转等操作
 				ElMessage.success('登录成功');
@@ -137,6 +189,7 @@
 	}
 
 	onMounted(()=>{
+		loadRememberedLogin()
 		//请求数据
 		getCaptchas()
 	})
@@ -152,6 +205,15 @@
 		margin: 0px -19px;
 		border-top-right-radius: 2px;
 		border-bottom-right-radius: 2px;
+	}
+	.remember-row :deep(.el-form-item__content) {
+		display: flex;
+		justify-content: space-between;
+		gap: 8px;
+	}
+	.remember-hint {
+		color: var(--el-text-color-secondary);
+		font-size: 12px;
 	}
 	.login-btn{
 		margin-top: 10px;
