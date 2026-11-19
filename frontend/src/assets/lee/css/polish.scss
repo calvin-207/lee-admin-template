@@ -28,15 +28,13 @@ body,
   -webkit-font-smoothing: antialiased;
 }
 
-/* Restore visible keyboard focus. The legacy app.scss disables outlines. */
-:where(a, button, input, textarea, select, [role="button"], [tabindex]):focus-visible,
-.el-button:focus-visible,
-.el-input__wrapper:focus-within {
+/* Restore keyboard focus for native controls, without stacking outlines on
+ * Element Plus inputs. Element Plus already highlights its input wrapper using
+ * its own focus box-shadow (including appended captcha inputs). */
+:where(a, button, input:not(.el-input__inner):not(.el-select__input), textarea:not(.el-textarea__inner), select, [role="button"], [tabindex]):focus-visible,
+.el-button:focus-visible {
   outline: 2px solid var(--el-color-primary) !important;
   outline-offset: 2px;
-}
-.el-input__wrapper:focus-within {
-  outline-offset: 1px;
 }
 :where(a, button, [role="button"]):focus:not(:focus-visible) {
   outline: none;
