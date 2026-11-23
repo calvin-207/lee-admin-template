@@ -26,7 +26,7 @@ PyMySQL==1.1.1
 # ************** 缓存 / WebSocket / Channels ************** #
 # ================================================= #
 django-redis==5.4.0
-channels==4.2.2
+channels==4.3.2
 channels_redis==4.2.1
 redis==5.2.1
 
