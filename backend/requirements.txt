@@ -41,7 +41,7 @@ drf-spectacular-sidecar==2025.6.1
 # ================================================= #
 django-filter==24.3
 django-simple-captcha==0.6.1
-django-comment-migrate==0.1.0
+django-comment-migrate==0.1.7
 django-ranged-response==0.2.0
 
 # ================================================= #
